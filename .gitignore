@@ -1,6 +1,7 @@
 # Xcode
 #
 .swp
+Packages
 .build
 build/
 *.pbxuser
