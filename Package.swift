@@ -1,6 +1,9 @@
 import PackageDescription
 
 let package = Package (
-    name: "Swiftli"
+    name: "Swiftli",
+    dependencies: [
+        .Package(url: "../SocketServer", majorVersion: 1)
+    ]
 )
 
