@@ -2,10 +2,7 @@
 # 
 # Version/Product information
 #
-MAJOR_VERSION           = @MAJOR_VERSION@
-MINOR_VERSION           = @MINOR_VERSION@
-BUILD_VERSION           = @BUILD_VERSION@
-VERSION                 = $(MAJOR_VERSION).$(MINOR_VERSION).$(BUILD_VERSION)
+VERSION                 = 0.0.1
 PRODUCT_NAME            = swiftli
 
 # 
@@ -16,9 +13,9 @@ ifeq ($(OUTPUT_DIR),)
 endif
 
 SWIFTC = swiftc
-SWIFTCFLAGS = 
+SWIFTCFLAGS = -I ./Sources
 
-SOURCES := $(foreach dir,Sources,$(shell find $(dir)/*.swift -printf "%p " 2> /dev/null))
+SOURCES = $(wildcard Sources/*.swift)
 OBJECTS = $(foreach obj, $(patsubst %.swift,%.o,$(SOURCES)), $(OUTPUT_DIR)/$(obj))
 
 # Implicit rule to build .o into the build directory from .swift

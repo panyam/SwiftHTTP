@@ -1,10 +1,18 @@
 
 import CoreFoundation 
-import Foundation 
+import Foundation
+
+#if os(Linux)
 import SwiftGlibc
+#endif
 
 
-private func handleConnectionAccept(socket: CFSocket!, callbackType: CFSocketCallBackType, address: CFData!, data: UnsafePointer<Void>, info: UnsafeMutablePointer<Void>) {
+private func handleConnectionAccept(socket: CFSocket!,
+    callbackType: CFSocketCallBackType,
+    address: CFData!,
+    data: UnsafePointer<Void>,
+    info: UnsafeMutablePointer<Void>)
+{
 }
 
 public class Server {
@@ -20,8 +28,6 @@ public class Server {
     private var serverSocket : CFSocket?
 
     init() {
-        var _ = CFNumberCreate(nil, 15, nil)
-        serverSocket = nil
         print("Server Socket: \(serverSocket)")
     }
 
