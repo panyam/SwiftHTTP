@@ -1,7 +1,6 @@
 
 import CoreFoundation 
 import Foundation 
-import SocketServer
 import SwiftGlibc
 
 
@@ -18,13 +17,11 @@ public class Server {
     var host = "*"
     private var isRunning = false
     private var stopped = false
-    private var serverSocket : CFSocket
+    private var serverSocket : CFSocket?
 
     init() {
         var _ = CFNumberCreate(nil, 15, nil)
-        ev_default_loop(0);
-        socket(AF_INET, 0, 0)
-        serverSocket = CFSocketCreate(nil, 0, 0, 0, 2, nil, nil);
+        serverSocket = nil
         print("Server Socket: \(serverSocket)")
     }
 
