@@ -41,7 +41,12 @@ print("Starting server... 2")
 //  With this approach it is intuitive and no need to maintain a state machine. 
 //  But writes still have go through channel mechanism to prevent interleaved data being incorrect.
 //  With this approach, the event loop will have to buffer read/write data (and data will have to be copied to/from ev side of things)
-var input: Reader? = nil
-var output: Writer? = nil
-var connection : HttpConnection = HttpConnection(input: input, output: output);
-connection.start();
+
+var server = CFSocketServer(port: 9999, portv6: 9999)
+server.start()
+var shouldKeepRunning = true        // global
+
+while shouldKeepRunning && CFRunLoopRunInMode(kCFRunLoopDefaultMode, 5, false) != CFRunLoopRunResult.Finished {
+    print("Clocked ticked...")
+}
+
