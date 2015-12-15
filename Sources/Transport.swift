@@ -8,9 +8,9 @@ protocol ClientTransport {
 
 protocol Connection {
     /**
-     * Sets the underlying connection object this is listening to.
+     * The underlying connection object this is listening to.
      */
-    func setTransport(conn: ClientTransport)
+    var transport : ClientTransport? { get set }
     
     /**
      * Called when the connection has been closed.

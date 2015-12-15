@@ -30,10 +30,10 @@ private func handleConnectionAccept(socket: CFSocket!,
         let clientSocket = UnsafePointer<CFSocketNativeHandle>(data)
         let clientSocketNativeHandle = clientSocket[0]
         let socketConnection = CFSocketClientTransport(clientSocketNativeHandle)
-        let connection = socketTransport.connectionFactory?.connectionAccepted()
+        var connection = socketTransport.connectionFactory?.connectionAccepted()
         if connection != nil
         {
-            connection?.setTransport(socketConnection)
+            connection?.transport = socketConnection
             socketConnection.start(connection!)
         } else {
             // TODO: close the socket since no connection delegate was found
