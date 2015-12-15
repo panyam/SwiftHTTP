@@ -13,10 +13,8 @@
 		F7CF63FF1C1E729300493204 /* HttpMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F71C1E729300493204 /* HttpMessage.swift */; };
 		F7CF64001C1E729300493204 /* HttpRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F81C1E729300493204 /* HttpRequest.swift */; };
 		F7CF64011C1E729300493204 /* HttpResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F91C1E729300493204 /* HttpResponse.swift */; };
-		F7CF64021C1E729300493204 /* Transport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63FA1C1E729300493204 /* Transport.swift */; };
 		F7CF64031C1E729300493204 /* Streams.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63FB1C1E729300493204 /* Streams.swift */; };
-		F7CF64091C1E73DF00493204 /* CFSocketServerTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF64081C1E73DF00493204 /* CFSocketServerTransport.swift */; };
-		F7CF640B1C1FF1AE00493204 /* CFSocketClientTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF640A1C1FF1AE00493204 /* CFSocketClientTransport.swift */; };
+		F7CF646E1C209D0600493204 /* SwiftSocketServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7CF646D1C209D0600493204 /* SwiftSocketServer.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -39,10 +37,8 @@
 		F7CF63F71C1E729300493204 /* HttpMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpMessage.swift; sourceTree = "<group>"; };
 		F7CF63F81C1E729300493204 /* HttpRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpRequest.swift; sourceTree = "<group>"; };
 		F7CF63F91C1E729300493204 /* HttpResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpResponse.swift; sourceTree = "<group>"; };
-		F7CF63FA1C1E729300493204 /* Transport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Transport.swift; sourceTree = "<group>"; };
 		F7CF63FB1C1E729300493204 /* Streams.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Streams.swift; sourceTree = "<group>"; };
-		F7CF64081C1E73DF00493204 /* CFSocketServerTransport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CFSocketServerTransport.swift; path = Sources/CFSocketServerTransport.swift; sourceTree = "<group>"; };
-		F7CF640A1C1FF1AE00493204 /* CFSocketClientTransport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CFSocketClientTransport.swift; sourceTree = "<group>"; };
+		F7CF646D1C209D0600493204 /* SwiftSocketServer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftSocketServer.framework; path = ../../SwiftSocketServer/build/Debug/SwiftSocketServer.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F7CF646E1C209D0600493204 /* SwiftSocketServer.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +56,7 @@
 		F7CF63891C1E715000493204 = {
 			isa = PBXGroup;
 			children = (
+				F7CF646D1C209D0600493204 /* SwiftSocketServer.framework */,
 				F7CF64061C1E73BD00493204 /* Core */,
 				F7CF63931C1E715000493204 /* Products */,
 			);
@@ -81,7 +79,6 @@
 				F7CF63F71C1E729300493204 /* HttpMessage.swift */,
 				F7CF63F81C1E729300493204 /* HttpRequest.swift */,
 				F7CF63F91C1E729300493204 /* HttpResponse.swift */,
-				F7CF63FA1C1E729300493204 /* Transport.swift */,
 				F7CF63FB1C1E729300493204 /* Streams.swift */,
 			);
 			name = Sources;
@@ -91,19 +88,9 @@
 		F7CF64061C1E73BD00493204 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				F7CF64071C1E73D100493204 /* OSX */,
 				F7CF63F31C1E729300493204 /* Sources */,
 			);
 			name = Core;
-			sourceTree = "<group>";
-		};
-		F7CF64071C1E73D100493204 /* OSX */ = {
-			isa = PBXGroup;
-			children = (
-				F7CF64081C1E73DF00493204 /* CFSocketServerTransport.swift */,
-				F7CF640A1C1FF1AE00493204 /* CFSocketClientTransport.swift */,
-			);
-			name = OSX;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -163,12 +150,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F7CF64021C1E729300493204 /* Transport.swift in Sources */,
 				F7CF63FD1C1E729300493204 /* HttpHeaders.swift in Sources */,
 				F7CF63FF1C1E729300493204 /* HttpMessage.swift in Sources */,
 				F7CF64001C1E729300493204 /* HttpRequest.swift in Sources */,
-				F7CF64091C1E73DF00493204 /* CFSocketServerTransport.swift in Sources */,
-				F7CF640B1C1FF1AE00493204 /* CFSocketClientTransport.swift in Sources */,
 				F7CF63FC1C1E729300493204 /* HttpConnection.swift in Sources */,
 				F7CF64011C1E729300493204 /* HttpResponse.swift in Sources */,
 				F7CF63FE1C1E729300493204 /* main.swift in Sources */,

@@ -3,7 +3,7 @@ import PackageDescription
 let package = Package (
     name: "Swiftli",
     dependencies: [
-        .Package(url: "../SocketServer", majorVersion: 1)
+        .Package(url: "../SwiftSocketServer", majorVersion: 1)
     ]
 )
 

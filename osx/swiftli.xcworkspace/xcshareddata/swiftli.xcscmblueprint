@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "C8C3584BAAEE677B0007020C560B6B04EB636DFC",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "C8C3584BAAEE677B0007020C560B6B04EB636DFC" : 0,
+    "1546C33F76143E626ACB6B664C1A8B501AC5FBCC" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "BC9FF3C8-7B02-4B04-BD13-FAA7E081393C",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "C8C3584BAAEE677B0007020C560B6B04EB636DFC" : "swiftli\/",
+    "1546C33F76143E626ACB6B664C1A8B501AC5FBCC" : "SwiftSocketServer\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "swiftli",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "osx\/swiftli.xcworkspace",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:panyam\/SwiftSocketServer.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "1546C33F76143E626ACB6B664C1A8B501AC5FBCC"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:panyam\/swiftli.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "C8C3584BAAEE677B0007020C560B6B04EB636DFC"
+    }
+  ]
+}
