@@ -40,7 +40,7 @@ import CoreFoundation
 //  But writes still have go through channel mechanism to prevent interleaved data being incorrect.
 //  With this approach, the event loop will have to buffer read/write data (and data will have to be copied to/from ev side of things)
 
-var server = CFSocketServer(port: 9999, portv6: 9999)
+var server = CFSocketServerTransport(port: 9999, portv6: 9999)
 server.start()
 var shouldKeepRunning = true        // global
 

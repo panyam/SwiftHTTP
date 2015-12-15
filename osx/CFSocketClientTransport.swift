@@ -1,5 +1,5 @@
 //
-//  CFSocketConnection.swift
+//  CFSocketClientTransport.swift
 //  swiftli
 //
 //  Created by Sriram Panyam on 12/14/15.
@@ -9,9 +9,9 @@
 import Foundation
 
 let DEFAULT_BUFFER_SIZE = 8192
-public class CFSocketConnection : Connection {
+public class CFSocketClientTransport : ClientTransport {
     var clientSocket : CFSocketNativeHandle
-    var connectionDelegate : ConnectionDelegate?
+    var connection : Connection?
     var readStream : CFReadStream?
     var writeStream : CFWriteStream?
     
@@ -55,13 +55,13 @@ public class CFSocketConnection : Connection {
     
     private func asUnsafeMutableVoid() -> UnsafeMutablePointer<Void>
     {
-        let selfAsOpaque = Unmanaged<CFSocketConnection>.passUnretained(self).toOpaque()
+        let selfAsOpaque = Unmanaged<CFSocketClientTransport>.passUnretained(self).toOpaque()
         let selfAsVoidPtr = UnsafeMutablePointer<Void>(selfAsOpaque)
         return selfAsVoidPtr
     }
 
-    func start(delegate : ConnectionDelegate) {
-        connectionDelegate = delegate
+    func start(delegate : Connection) {
+        connection = delegate
     }
     
     /**
@@ -90,25 +90,25 @@ public class CFSocketConnection : Connection {
     var readBuffer = UnsafeMutablePointer<UInt8>.alloc(DEFAULT_BUFFER_SIZE)
     
     func connectionClosed() {
-        connectionDelegate?.connectionClosed()
+        connection?.connectionClosed()
     }
     
     func hasBytesAvailable() {
         // It is safe to call CFReadStreamRead; it won’t block because bytes are available.
         let bytesRead = CFReadStreamRead(readStream, readBuffer, DEFAULT_BUFFER_SIZE);
         if bytesRead > 0 {
-            connectionDelegate?.dataReceived(readBuffer, length: bytesRead)
+            connection?.dataReceived(readBuffer, length: bytesRead)
         } else if bytesRead < 0 {
             handleReadError()
         }
     }
     
     func canAcceptBytes() {
-        if let (buffer, length) = connectionDelegate?.writeDataRequested() {
+        if let (buffer, length) = connection?.writeDataRequested() {
             if length > 0 {
                 let numWritten = CFWriteStreamWrite(writeStream, buffer, length)
                 if numWritten > 0 {
-                    connectionDelegate?.dataWritten(numWritten)
+                    connection?.dataWritten(numWritten)
                 } else if numWritten < 0 {
                     // error?
                     handleWriteError()
@@ -136,7 +136,7 @@ public class CFSocketConnection : Connection {
 
 func readCallback(readStream: CFReadStream!, eventType: CFStreamEventType, info: UnsafeMutablePointer<Void>) -> Void
 {
-    let socketConnection = Unmanaged<CFSocketConnection>.fromOpaque(COpaquePointer(info)).takeUnretainedValue()
+    let socketConnection = Unmanaged<CFSocketClientTransport>.fromOpaque(COpaquePointer(info)).takeUnretainedValue()
     if eventType == CFStreamEventType.HasBytesAvailable {
         socketConnection.hasBytesAvailable()
     } else if eventType == CFStreamEventType.EndEncountered {
@@ -148,11 +148,11 @@ func readCallback(readStream: CFReadStream!, eventType: CFStreamEventType, info:
 
 func writeCallback(writeStream: CFWriteStream!, eventType: CFStreamEventType, info: UnsafeMutablePointer<Void>) -> Void
 {
-    let socketConnection = Unmanaged<CFSocketConnection>.fromOpaque(COpaquePointer(info)).takeUnretainedValue()
+    let socketConnection = Unmanaged<CFSocketClientTransport>.fromOpaque(COpaquePointer(info)).takeUnretainedValue()
     if eventType == CFStreamEventType.CanAcceptBytes {
         socketConnection.canAcceptBytes();
     } else if eventType == CFStreamEventType.EndEncountered {
-        socketConnection.connectionDelegate?.connectionClosed()
+        socketConnection.connectionClosed()
     } else if eventType == CFStreamEventType.ErrorOccurred {
         socketConnection.handleWriteError()
     }

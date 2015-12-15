@@ -2,15 +2,15 @@
 /**
  * The connection object that is the interface to the underlying transport.
  */
-protocol Connection {
+protocol ClientTransport {
     func setWriteable()
 }
 
-protocol ConnectionDelegate {
+protocol Connection {
     /**
      * Sets the underlying connection object this is listening to.
      */
-    func setConnection(conn: Connection)
+    func setTransport(conn: ClientTransport)
     
     /**
      * Called when the connection has been closed.
@@ -41,7 +41,7 @@ protocol ConnectionFactory {
      * Called when a new connection has been created and appropriate data needs
      * needs to be initialised for this.
      */
-    func connectionAccepted() -> ConnectionDelegate
+    func connectionAccepted() -> Connection
 }
 
 protocol ServerTransport {

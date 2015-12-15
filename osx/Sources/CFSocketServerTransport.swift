@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements a server transport and runloop on top of CFSocket.
+//  This file implements a client transport and runloop on top of CFSocketNativeHandle.
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,15 +26,15 @@ private func handleConnectionAccept(socket: CFSocket!,
 {
     if (callbackType == CFSocketCallBackType.AcceptCallBack)
     {
-        let socketTransport = Unmanaged<CFSocketServer>.fromOpaque(COpaquePointer(info)).takeUnretainedValue()
+        let socketTransport = Unmanaged<CFSocketServerTransport>.fromOpaque(COpaquePointer(info)).takeUnretainedValue()
         let clientSocket = UnsafePointer<CFSocketNativeHandle>(data)
         let clientSocketNativeHandle = clientSocket[0]
-        let socketConnection = CFSocketConnection(clientSocketNativeHandle)
-        let connDelegate = socketTransport.connectionFactory?.connectionAccepted()
-        if connDelegate != nil
+        let socketConnection = CFSocketClientTransport(clientSocketNativeHandle)
+        let connection = socketTransport.connectionFactory?.connectionAccepted()
+        if connection != nil
         {
-            connDelegate?.setConnection(socketConnection)
-            socketConnection.start(connDelegate!)
+            connection?.setTransport(socketConnection)
+            socketConnection.start(connection!)
         } else {
             // TODO: close the socket since no connection delegate was found
         }
@@ -42,7 +42,7 @@ private func handleConnectionAccept(socket: CFSocket!,
     }
 }
 
-public class CFSocketServer : ServerTransport {
+public class CFSocketServerTransport : ServerTransport {
     /**
      * Option to ignore a request if header's exceed this length>
      */
@@ -74,7 +74,7 @@ public class CFSocketServer : ServerTransport {
     
     private func initSocket()
     {
-        let selfAsOpaque = Unmanaged<CFSocketServer>.passUnretained(self).toOpaque()
+        let selfAsOpaque = Unmanaged<CFSocketServerTransport>.passUnretained(self).toOpaque()
         let selfAsVoidPtr = UnsafeMutablePointer<Void>(selfAsOpaque)
         var socketContext = CFSocketContext(version: 0, info: selfAsVoidPtr, retain: nil, release: nil, copyDescription: nil)
         withUnsafePointer(&socketContext) {
@@ -106,7 +106,7 @@ public class CFSocketServer : ServerTransport {
 
     private func asUnsafeMutableVoid() -> UnsafeMutablePointer<Void>
     {
-        let selfAsOpaque = Unmanaged<CFSocketServer>.passUnretained(self).toOpaque()
+        let selfAsOpaque = Unmanaged<CFSocketServerTransport>.passUnretained(self).toOpaque()
         let selfAsVoidPtr = UnsafeMutablePointer<Void>(selfAsOpaque)
         return selfAsVoidPtr
     }
