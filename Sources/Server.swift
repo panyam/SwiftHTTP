@@ -1,13 +1,51 @@
 
+/**
+ * The connection object that is the interface to the underlying transport.
+ */
 protocol Connection {
+    func setWriteable()
 }
 
-protocol ConnectionHandler {
-    func handleConnection(connection: Connection)
+protocol ConnectionDelegate {
+    /**
+     * Sets the underlying connection object this is listening to.
+     */
+    func setConnection(conn: Connection)
+    
+    /**
+     * Called when the connection has been closed.
+     */
+    func connectionClosed()
+    
+    /**
+     * Called by the transport when it is ready to send data.
+     * Returns the number of bytes of data available.
+     */
+    func writeDataRequested() -> (buffer: UnsafeMutablePointer<UInt8>, length: Int)?
+    
+    /**
+     * Called into indicate numWritten bytes have been written.
+     */
+    func dataWritten(numWritten: Int)
+    
+    /**
+     * Called to process data that has been received.
+     * It is upto the caller of this interface to consume *all* the data
+     * provided.
+     */
+    func dataReceived(buffer: UnsafePointer<UInt8>, length: Int)
+}
+
+protocol ConnectionFactory {
+    /**
+     * Called when a new connection has been created and appropriate data needs
+     * needs to be initialised for this.
+     */
+    func connectionAccepted() -> ConnectionDelegate
 }
 
 protocol ServerTransport {
-    var connectionHandler : ConnectionHandler? { get set }
+    var connectionFactory : ConnectionFactory? { get set }
     func start()
     func stop()
 }

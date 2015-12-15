@@ -6,8 +6,6 @@ srandom(UInt32(clock()))
 
 import CoreFoundation
 
-print("Starting server... 2")
-
 // How do I want this to work?
 // There are two options (both require event loops):
 //  Event loop use is as follows:

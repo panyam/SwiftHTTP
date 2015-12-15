@@ -28,9 +28,17 @@ private func handleConnectionAccept(socket: CFSocket!,
     {
         let socketTransport = Unmanaged<CFSocketServer>.fromOpaque(COpaquePointer(info)).takeUnretainedValue()
         let clientSocket = UnsafePointer<CFSocketNativeHandle>(data)
-        let socketConnection = CFSocketConnection(clientSocket[0])
-        print("Got connection event: \(callbackType), \(socketTransport), \(clientSocket)");
-        socketTransport.connectionHandler?.handleConnection(socketConnection)
+        let clientSocketNativeHandle = clientSocket[0]
+        let socketConnection = CFSocketConnection(clientSocketNativeHandle)
+        let connDelegate = socketTransport.connectionFactory?.connectionAccepted()
+        if connDelegate != nil
+        {
+            connDelegate?.setConnection(socketConnection)
+            socketConnection.start(connDelegate!)
+        } else {
+            // TODO: close the socket since no connection delegate was found
+        }
+        NSLog("Got connection event: \(callbackType), \(socketTransport), \(clientSocket)");
     }
 }
 
@@ -44,23 +52,18 @@ public class CFSocketServer : ServerTransport {
     private var serverPortV6 : UInt16 = 0
     private var serverSocket : CFSocket?
     private var serverSocketV6 : CFSocket?
-    var connectionHandler : ConnectionHandler?
+    var connectionFactory : ConnectionFactory?
     
     init(port: UInt16, portv6: UInt16) {
         serverPort = port
         serverPortV6 = portv6
     }
     
-    func printHello()
-    {
-        print("printing hello world");
-    }
-    
     func start() {
-        print("Running server")
+        NSLog("Running server")
         
         if isRunning {
-            print("Server is already running")
+            NSLog("Server is already running")
             return
         }
         
@@ -93,20 +96,24 @@ public class CFSocketServer : ServerTransport {
             let err = CFSocketSetAddress(serverSocket, sincfd);
             if err != CFSocketError.Success {
                 let errstr : String? =  String.fromCString(strerror(errno));
-                print ("Socket Set Address Error: \(err.rawValue), \(errno), \(errstr)")
+                NSLog ("Socket Set Address Error: \(err.rawValue), \(errno), \(errstr)")
             }
         }
 
-        print("Self: \(self)")
         let socketSource = CFSocketCreateRunLoopSource(kCFAllocatorDefault, serverSocket, 0)
         CFRunLoopAddSource(CFRunLoopGetCurrent(), socketSource, kCFRunLoopDefaultMode)
     }
 
-    private func initSocketV6()
+    private func asUnsafeMutableVoid() -> UnsafeMutablePointer<Void>
     {
         let selfAsOpaque = Unmanaged<CFSocketServer>.passUnretained(self).toOpaque()
         let selfAsVoidPtr = UnsafeMutablePointer<Void>(selfAsOpaque)
-        var socketContext = CFSocketContext(version: 0, info: selfAsVoidPtr, retain: nil, release: nil, copyDescription: nil)
+        return selfAsVoidPtr
+    }
+    
+    private func initSocketV6()
+    {
+        var socketContext = CFSocketContext(version: 0, info: self.asUnsafeMutableVoid(), retain: nil, release: nil, copyDescription: nil)
         withUnsafePointer(&socketContext) {
             serverSocketV6 = CFSocketCreate(kCFAllocatorDefault, PF_INET6, 0, 0, 2, handleConnectionAccept, UnsafePointer<CFSocketContext>($0));
         }
