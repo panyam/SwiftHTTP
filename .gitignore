@@ -3,6 +3,7 @@
 .swp
 Packages
 .build
+osx/Pods
 build/
 *.pbxuser
 !default.pbxuser
