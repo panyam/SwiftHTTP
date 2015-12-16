@@ -7,7 +7,7 @@ srandom(UInt32(clock()))
 import CoreFoundation
 import SwiftSocketServer
 
-var server = CFSocketServerTransport()
+var server = CFSocketServerTransport(nil)
 //server.connectionFactory = EchoFactory()
 server.start()
 
