@@ -1,9 +1,6 @@
 
 public class HttpRequest : HttpMessage {
     var method = "GET"
-    var inputStream: Reader?
-
-    init(method: String) {
-        self.method = method
-    }
+    var requestTarget = ""
+    var version = "HTTP 1.1"
 }

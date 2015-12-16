@@ -7,8 +7,15 @@ srandom(UInt32(clock()))
 import CoreFoundation
 import SwiftSocketServer
 
+
+class HttpFactory : ConnectionFactory {
+    func connectionAccepted() -> Connection {
+        return HttpConnection()
+    }
+}
+
 var server = CFSocketServerTransport(nil)
-//server.connectionFactory = EchoFactory()
+server.connectionFactory = HttpFactory()
 server.start()
 
 while CFRunLoopRunInMode(kCFRunLoopDefaultMode, 5, false) != CFRunLoopRunResult.Finished {

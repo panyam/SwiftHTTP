@@ -28,7 +28,7 @@ public class Header {
     /**
      * Adds a new values to the list of values associated with this header's key
      */
-    func addValue(value: String) {
+    public func addValue(value: String) {
         values.append(value);
     }
 
@@ -38,20 +38,5 @@ public class Header {
 
     func firstValue() -> String? {
         return values[0]
-    }
-}
-
-/**
- * A header list for request and responses.
- */
-public class HeaderCollection {
-    var headers: [String: Header]
-
-    init() {
-        headers = [String: Header]()
-    }
-
-    func headerForKey(key: String) -> Header? {
-        return headers[key]
     }
 }
