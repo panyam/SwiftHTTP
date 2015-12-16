@@ -3,6 +3,7 @@
 
 source 'https://github.com/CocoaPods/Specs.git'
 workspace 'swiftli'
+use_frameworks!
 
 inhibit_all_warnings!
 

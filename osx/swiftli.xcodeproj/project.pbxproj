@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F7B1D0C51C21024300DEBD83 /* SwiftSocketServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7B1D0C41C21024300DEBD83 /* SwiftSocketServer.framework */; };
 		F7CF63FC1C1E729300493204 /* HttpConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F41C1E729300493204 /* HttpConnection.swift */; };
 		F7CF63FD1C1E729300493204 /* HttpHeaders.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F51C1E729300493204 /* HttpHeaders.swift */; };
 		F7CF63FE1C1E729300493204 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F61C1E729300493204 /* main.swift */; };
@@ -14,7 +15,6 @@
 		F7CF64001C1E729300493204 /* HttpRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F81C1E729300493204 /* HttpRequest.swift */; };
 		F7CF64011C1E729300493204 /* HttpResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F91C1E729300493204 /* HttpResponse.swift */; };
 		F7CF64031C1E729300493204 /* Streams.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63FB1C1E729300493204 /* Streams.swift */; };
-		F7CF646E1C209D0600493204 /* SwiftSocketServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7CF646D1C209D0600493204 /* SwiftSocketServer.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,6 +30,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F7B1D0C41C21024300DEBD83 /* SwiftSocketServer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftSocketServer.framework; path = "../../../Library/Developer/Xcode/DerivedData/swiftli-agzelxuwcvqtmhgglneebflmmofu/Build/Products/Debug/SwiftSocketServer.framework"; sourceTree = "<group>"; };
 		F7CF63921C1E715000493204 /* swiftli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = swiftli; sourceTree = BUILT_PRODUCTS_DIR; };
 		F7CF63F41C1E729300493204 /* HttpConnection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpConnection.swift; sourceTree = "<group>"; };
 		F7CF63F51C1E729300493204 /* HttpHeaders.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpHeaders.swift; sourceTree = "<group>"; };
@@ -38,7 +39,6 @@
 		F7CF63F81C1E729300493204 /* HttpRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpRequest.swift; sourceTree = "<group>"; };
 		F7CF63F91C1E729300493204 /* HttpResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpResponse.swift; sourceTree = "<group>"; };
 		F7CF63FB1C1E729300493204 /* Streams.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Streams.swift; sourceTree = "<group>"; };
-		F7CF646D1C209D0600493204 /* SwiftSocketServer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftSocketServer.framework; path = ../../SwiftSocketServer/build/Debug/SwiftSocketServer.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,19 +46,27 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F7CF646E1C209D0600493204 /* SwiftSocketServer.framework in Frameworks */,
+				F7B1D0C51C21024300DEBD83 /* SwiftSocketServer.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2803102C5113276E6DE0E2DB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F7B1D0C41C21024300DEBD83 /* SwiftSocketServer.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F7CF63891C1E715000493204 = {
 			isa = PBXGroup;
 			children = (
-				F7CF646D1C209D0600493204 /* SwiftSocketServer.framework */,
 				F7CF64061C1E73BD00493204 /* Core */,
 				F7CF63931C1E715000493204 /* Products */,
+				2803102C5113276E6DE0E2DB /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
