@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F73A8C8C1C2224C600352333 /* HttpStreamHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73A8C8B1C2224C600352333 /* HttpStreamHandler.swift */; };
+		F73A8C8E1C225A6C00352333 /* Http1StreamHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73A8C8D1C225A6C00352333 /* Http1StreamHandler.swift */; };
 		F7B1D0C51C21024300DEBD83 /* SwiftSocketServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7B1D0C41C21024300DEBD83 /* SwiftSocketServer.framework */; };
 		F7B1D0C71C21B8B700DEBD83 /* HttpConnectionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B1D0C61C21B8B700DEBD83 /* HttpConnectionDelegate.swift */; };
 		F7CF63FC1C1E729300493204 /* HttpConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F41C1E729300493204 /* HttpConnection.swift */; };
@@ -31,6 +33,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F73A8C8B1C2224C600352333 /* HttpStreamHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpStreamHandler.swift; sourceTree = "<group>"; };
+		F73A8C8D1C225A6C00352333 /* Http1StreamHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Http1StreamHandler.swift; sourceTree = "<group>"; };
 		F7B1D0C41C21024300DEBD83 /* SwiftSocketServer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftSocketServer.framework; path = "../../../Library/Developer/Xcode/DerivedData/swiftli-agzelxuwcvqtmhgglneebflmmofu/Build/Products/Debug/SwiftSocketServer.framework"; sourceTree = "<group>"; };
 		F7B1D0C61C21B8B700DEBD83 /* HttpConnectionDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpConnectionDelegate.swift; sourceTree = "<group>"; };
 		F7CF63921C1E715000493204 /* swiftli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = swiftli; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -91,6 +95,8 @@
 				F7CF63F91C1E729300493204 /* HttpResponse.swift */,
 				F7CF63FB1C1E729300493204 /* Streams.swift */,
 				F7B1D0C61C21B8B700DEBD83 /* HttpConnectionDelegate.swift */,
+				F73A8C8B1C2224C600352333 /* HttpStreamHandler.swift */,
+				F73A8C8D1C225A6C00352333 /* Http1StreamHandler.swift */,
 			);
 			name = Sources;
 			path = ../Sources;
@@ -161,12 +167,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F73A8C8E1C225A6C00352333 /* Http1StreamHandler.swift in Sources */,
 				F7CF63FD1C1E729300493204 /* HttpHeaders.swift in Sources */,
 				F7CF63FF1C1E729300493204 /* HttpMessage.swift in Sources */,
 				F7B1D0C71C21B8B700DEBD83 /* HttpConnectionDelegate.swift in Sources */,
 				F7CF64001C1E729300493204 /* HttpRequest.swift in Sources */,
 				F7CF63FC1C1E729300493204 /* HttpConnection.swift in Sources */,
 				F7CF64011C1E729300493204 /* HttpResponse.swift in Sources */,
+				F73A8C8C1C2224C600352333 /* HttpStreamHandler.swift in Sources */,
 				F7CF63FE1C1E729300493204 /* main.swift in Sources */,
 				F7CF64031C1E729300493204 /* Streams.swift in Sources */,
 			);

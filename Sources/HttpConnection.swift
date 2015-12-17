@@ -3,8 +3,9 @@ import SwiftSocketServer
 
 let CR : UInt8 = 13
 let LF : UInt8 = 10
+let BUFFER_LENGTH = 8192
 
-class HttpConnection : Connection
+public class HttpConnection : Connection
 {
     private enum ReadState : CFIndex {
         case READING_START_LINE
@@ -12,16 +13,57 @@ class HttpConnection : Connection
         case READING_REQUEST_BODY
     }
 
-    var transport : ClientTransport?
+    public var delegate : HttpConnectionDelegate?
+
+    private var socketStream : SocketStream?
+    private var streamHandler : HttpStreamHandler?
     private var readState = ReadState.READING_START_LINE
     private var currentLine = ""
     private var currentRequest = HttpRequest()
-    public var delegate : HttpConnectionDelegate?
+    private var readBuffer = UnsafeMutablePointer<UInt8>.alloc(BUFFER_LENGTH)
+    public var transport : ClientTransport?
+    
+    public init()
+    {
+        finishCurrentRequest()
+    }
+
+    /**
+     * Called to initiate the closing of a connection.  Ensures that all data that is buffered is sent out
+     * (as long as connection hasnt been called by the peer).
+     */
+    public func close()
+    {
+    }
+    
+    /**
+     * Called when read error received.
+     */
+    public func receivedReadError(error: SocketErrorType)
+    {
+    }
+    
+    /**
+     * Called when write error received.
+     */
+    public func receivedWriteError(error: SocketErrorType)
+    {
+    }
+
+    /**
+     * Finishes the current request and starts a new empty request.
+     */
+    public func finishCurrentRequest()
+    {
+        readState = ReadState.READING_START_LINE
+        currentLine = ""
+        currentRequest = HttpRequest()
+    }
     
     /**
      * Called when the connection has been closed.
      */
-    func connectionClosed()
+    public func connectionClosed()
     {
         print("Good bye!")
     }
@@ -30,19 +72,26 @@ class HttpConnection : Connection
      * Called by the transport when it is ready to send data.
      * Returns the number of bytes of data available.
      */
-    func writeDataRequested() -> (buffer: UnsafeMutablePointer<UInt8>, length: Int)?
+    public func writeDataRequested() -> (buffer: UnsafeMutablePointer<UInt8>, length: Int)?
     {
         print("Write data requested...");
-//        return (buffer, length)
         return nil;
     }
     
     /**
      * Called into indicate numWritten bytes have been written.
      */
-    func dataWritten(numWritten: Int)
+    public func dataWritten(numWritten: Int)
     {
-//        length -= numWritten
+    }
+    
+    /**
+     * Called by the transport when it can pass data to be processed.
+     * Returns a buffer (and length) into which at most length number bytes will be filled.
+     */
+    public func readDataRequested() -> (buffer: UnsafeMutablePointer<UInt8>, length: Int)?
+    {
+        return (readBuffer, BUFFER_LENGTH)
     }
     
     /**
@@ -50,29 +99,39 @@ class HttpConnection : Connection
      * It is upto the caller of this interface to consume *all* the data
      * provided.
      */
-    func dataReceived(buffer: UnsafePointer<UInt8>, length: Int)
+    public func dataReceived(length: Int)
     {
-        processData(buffer, 0, length)
-    }
-
-    private func processData(buffer: UnsafePointer<UInt8>, _ offset: Int, _ length: Int)
-    {
-        var currOffset = offset
+        var currOffset = 0
         while currOffset < length {
             var numBytesProcessed = 0
-            let currState = readState
+            let prevState = readState
             switch readState {
-            case .READING_START_LINE: numBytesProcessed = processStartLine(buffer, currOffset, length)
-            case .READING_HEADER_LINE: numBytesProcessed = processHeaderLine(buffer, currOffset, length)
-            case .READING_REQUEST_BODY: numBytesProcessed = processRequestBody(buffer, currOffset, length)
+            case .READING_START_LINE:
+                numBytesProcessed = processStartLine(readBuffer, currOffset, length)
+            case .READING_HEADER_LINE:
+                numBytesProcessed = processHeaderLine(readBuffer, currOffset, length)
+            case .READING_REQUEST_BODY:
+                numBytesProcessed = streamHandler!.processData(readBuffer, currOffset, length)
             }
-            if numBytesProcessed == 0 {
-                // state MUST have changed otherwise
-                assert(currState != readState, "With 0 bytes processed, states MUST have changed")
-            } else if numBytesProcessed < 0 {
-                // definitely error
-            } else {
-                currOffset += numBytesProcessed
+
+            assert(numBytesProcessed != 0, "At least one byte must have been processed or we have an error")
+            if numBytesProcessed < 0 {
+                // definitely error so stop, and close too
+                return close()
+            }
+            
+            currOffset += numBytesProcessed
+            if prevState != readState && readState == ReadState.READING_REQUEST_BODY {
+                // headers have finished so get the stream handler to do its thing
+                streamHandler = delegate?.createStreamHandler(self, request: currentRequest)
+                if streamHandler == nil {
+                    // then try to guess it
+                    streamHandler = createDefaultStreamHandler()
+                    if streamHandler == nil {
+                        // no stream handler found so close the request
+                        return close()
+                    }
+                }
             }
         }
     }
@@ -104,18 +163,21 @@ class HttpConnection : Connection
         if foundLine {
             // parse the header line
             currentLine = currentLine.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
-            if currentLine == ""
-            {
-                // finished reading headers
-                delegate?.didReceiveHeaders(self)
-                readState = ReadState.READING_REQUEST_BODY
-            }
-            else if let colIndex = currentLine.rangeOfString(":")?.startIndex
+            if let colIndex = currentLine.rangeOfString(":")?.startIndex
             {
                 let headerKey = currentLine.substringToIndex(colIndex).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
                 let headerValue = currentLine.substringFromIndex(colIndex.advancedBy(1)).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
                 currentRequest.headerForKey(headerKey, create: true)?.addValue(headerValue)
                 delegate?.didReceiveHeader(self, key: headerKey, value: headerValue)
+            }
+            else if currentLine == ""
+            {
+                // finished reading headers
+                if !validateHeaders() {
+                    return -1
+                }
+                delegate?.didReceiveHeaders(self)
+                readState = ReadState.READING_REQUEST_BODY
             }
 
             // clear currentLine for next line
@@ -148,8 +210,19 @@ class HttpConnection : Connection
         return (length - offset, false)
     }
     
-    private func processRequestBody(buffer: UnsafePointer<UInt8>, _ offset: Int, _ length: Int) -> Int
+    /**
+     * Validates the headers in the current request.  
+     * Returns true if validation succeeded, false otherwise.
+     */
+    private func validateHeaders() -> Bool
     {
-        return 0
+        // TODO: Check target type
+        // TODO: Check Host Headers
+        return true;
+    }
+    
+    public func createDefaultStreamHandler() -> HttpStreamHandler?
+    {
+        return Http1StreamHandler()
     }
 }

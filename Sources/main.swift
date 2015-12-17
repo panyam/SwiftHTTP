@@ -8,14 +8,14 @@ import CoreFoundation
 import SwiftSocketServer
 
 
-class HttpFactory : ConnectionFactory {
+class HttpConnectionFactory : ConnectionFactory {
     func connectionAccepted() -> Connection {
         return HttpConnection()
     }
 }
 
 var server = CFSocketServerTransport(nil)
-server.connectionFactory = HttpFactory()
+server.connectionFactory = HttpConnectionFactory()
 server.start()
 
 while CFRunLoopRunInMode(kCFRunLoopDefaultMode, 5, false) != CFRunLoopRunResult.Finished {
