@@ -1,4 +1,6 @@
 
+import SwiftIO
+
 public class HttpResponse : HttpMessage {
     var statusCode = 200
     var httpVersion = ""

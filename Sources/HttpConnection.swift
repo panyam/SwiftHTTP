@@ -1,11 +1,11 @@
 
-import SwiftSocketServer
+import SwiftIO
 
 let CR : UInt8 = 13
 let LF : UInt8 = 10
 let BUFFER_LENGTH = 8192
 
-public class HttpConnection : Connection
+public class HttpConnection // : Connection
 {
     private enum ReadState : CFIndex {
         case READING_START_LINE
@@ -23,8 +23,9 @@ public class HttpConnection : Connection
     private var readBuffer = UnsafeMutablePointer<UInt8>.alloc(BUFFER_LENGTH)
     public var transport : ClientTransport?
     
-    public init()
+    public init(socketStream : SocketStream)
     {
+        self.socketStream = socketStream
         finishCurrentRequest()
     }
 
@@ -35,19 +36,14 @@ public class HttpConnection : Connection
     public func close()
     {
     }
-    
+
     /**
-     * Called when read error received.
+     * Serves a new connection.
      */
-    public func receivedReadError(error: SocketErrorType)
-    {
+    public func serve() {
     }
-    
-    /**
-     * Called when write error received.
-     */
-    public func receivedWriteError(error: SocketErrorType)
-    {
+
+    private func parseStartLine(callback: (error : ErrorType) -> ()) {
     }
 
     /**
@@ -58,31 +54,6 @@ public class HttpConnection : Connection
         readState = ReadState.READING_START_LINE
         currentLine = ""
         currentRequest = HttpRequest()
-    }
-    
-    /**
-     * Called when the connection has been closed.
-     */
-    public func connectionClosed()
-    {
-        print("Good bye!")
-    }
-
-    /**
-     * Called by the transport when it is ready to send data.
-     * Returns the number of bytes of data available.
-     */
-    public func writeDataRequested() -> (buffer: UnsafeMutablePointer<UInt8>, length: Int)?
-    {
-        print("Write data requested...");
-        return nil;
-    }
-    
-    /**
-     * Called into indicate numWritten bytes have been written.
-     */
-    public func dataWritten(numWritten: Int)
-    {
     }
     
     /**

@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:../../SwiftSocketServer/SwiftSocketServer.xcodeproj">
+      location = "group:../../SwiftIO/SwiftIO.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:swiftli.xcodeproj">

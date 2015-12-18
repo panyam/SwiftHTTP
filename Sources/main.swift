@@ -5,14 +5,22 @@ srandom(UInt32(clock()))
 #endif
 
 import CoreFoundation
-import SwiftSocketServer
-
+import SwiftIO
 
 class HttpConnectionFactory : ConnectionFactory {
-    func connectionAccepted() -> Connection {
-        return HttpConnection()
+    func createNewConnection() -> Connection {
+        return SocketStream()
+    }
+    
+    func connectionStarted(connection: Connection) {
+        let sockStream = connection as! SocketStream
+        let httpconn = HttpConnection(socketStream: sockStream)
+        connections.append(httpconn)
+        httpconn.serve()
     }
 }
+
+var connections = [HttpConnection]()
 
 var server = CFSocketServerTransport(nil)
 server.connectionFactory = HttpConnectionFactory()
