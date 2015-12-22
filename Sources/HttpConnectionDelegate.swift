@@ -9,7 +9,7 @@
 import Foundation
 
 public protocol HttpConnectionDelegate {
-    func didReceiveRequest(connection: HttpConnection, method: String, requestTarget: String, version: String)
+    func didStartNewRequest(connection: HttpConnection, method: String, requestTarget: String, version: String)
     func didReceiveHeader(connection: HttpConnection, key: String, value: String)
     func didReceiveHeaders(connection: HttpConnection)
     func createStreamHandler(connection: HttpConnection, request: HttpRequest) -> HttpStreamHandler?
