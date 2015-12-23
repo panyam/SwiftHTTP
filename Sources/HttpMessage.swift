@@ -11,8 +11,8 @@ public class HttpMessage {
             return header
         }
         if create {
-            headers[key] = Header()
+            headers[key] = Header(name: key)
         }
-        return nil
+        return headers[key]
     }
 }

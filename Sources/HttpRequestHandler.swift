@@ -8,6 +8,6 @@
 
 import Foundation
 
-public protocol HttpStreamHandler {
-    func processData(buffer: UnsafePointer<UInt8>, _ offset: Int, _ length: Int) -> Int
+public protocol HttpRequestHandler {
+    func handleRequest(request: HttpRequest, response: HttpResponse)
 }

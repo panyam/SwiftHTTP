@@ -12,5 +12,5 @@ public protocol HttpConnectionDelegate {
     func didStartNewRequest(connection: HttpConnection, method: String, requestTarget: String, version: String)
     func didReceiveHeader(connection: HttpConnection, key: String, value: String)
     func didReceiveHeaders(connection: HttpConnection)
-    func createStreamHandler(connection: HttpConnection, request: HttpRequest) -> HttpStreamHandler?
+    func createRequestHandler(connection: HttpConnection, request: HttpRequest) -> HttpRequestHandler?
 }

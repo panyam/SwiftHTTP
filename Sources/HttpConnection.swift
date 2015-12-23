@@ -10,35 +10,33 @@ public class HttpConnection // : Connection
 {
     public var delegate : HttpConnectionDelegate?
 
-    private var socketStream : SocketStream?
-    private var streamHandler : HttpStreamHandler?
-    private var currentRequest = HttpRequest()
-    private var readBuffer = UnsafeMutablePointer<UInt8>.alloc(BUFFER_LENGTH)
+    private var pipe : Pipe?
     private var buffReader : BufferedReader
     public var transport : ClientTransport?
+    private var currentRequestHandler : HttpRequestHandler?
+    private var currentRequest = HttpRequest()
+    private var currentResponse = HttpResponse(version: "HTTP/1.1")
     
-    public init(socketStream : SocketStream)
+    public init(_ pipe : Pipe)
     {
-        self.socketStream = socketStream
-        buffReader = BufferedReader(reader: socketStream, bufferSize: BUFFER_LENGTH)
+        self.pipe = pipe
+        buffReader = BufferedReader(reader: pipe, bufferSize: BUFFER_LENGTH)
     }
 
-    /**
-     * Finishes the current request and starts a new empty request.
-     */
-    public func finishCurrentRequest()
-    {
-        currentRequest = HttpRequest()
-    }
-    
     /**
      * Serves a new connection.
      */
     public func serve() {
-        finishCurrentRequest()
+        currentRequest = HttpRequest()
 
         parseStartLineAndHeaders { (error) -> () in
             // ready to read body and handle it!
+            print("Headers received...")
+            self.currentRequestHandler = self.delegate?.createRequestHandler(self, request: self.currentRequest)
+            if self.currentRequestHandler == nil {
+                self.currentRequestHandler = self.createDefaultRequestHandler()
+            }
+            self.currentRequestHandler!.handleRequest(self.currentRequest, response: self.currentResponse)
         }
     }
     
@@ -46,26 +44,28 @@ public class HttpConnection // : Connection
     {
         buffReader.readTillChar(LF) { (str, error) -> () in
             if error != nil {
-                callback(error: error)
-            } else {
-                self.parseStartLine(str)
-                
-                // now read headers
-                self.processHeaders(callback)
+                return callback(error: error)
             }
+
+            self.parseStartLine(str)
+            
+            // now read headers
+            self.processHeaders(callback)
         }
     }
     
     private func parseStartLine(startLine: String)
     {
         // parse the start line
-        let parts = startLine.componentsSeparatedByString(" ")
+        let parts = startLine.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet()).componentsSeparatedByString(" ")
         currentRequest.method = parts[0]
         currentRequest.requestTarget = parts[1]
         if parts.count > 2 {
             currentRequest.version = parts[2]
         }
         
+        currentResponse = HttpResponse(version: currentRequest.version)
+
         delegate?.didStartNewRequest(self, method: parts[0], requestTarget: parts[1], version: parts[2])
     }
     
@@ -109,6 +109,8 @@ public class HttpConnection // : Connection
             let headerValue = currentLine.substringFromIndex(colIndex.advancedBy(1)).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
             currentRequest.headerForKey(headerKey, create: true)?.addValue(headerValue)
             delegate?.didReceiveHeader(self, key: headerKey, value: headerValue)
+        } else {
+            // TODO: ignore or reject bad header lines?
         }
         return false
     }
@@ -124,8 +126,8 @@ public class HttpConnection // : Connection
         return true;
     }
     
-    public func createDefaultStreamHandler() -> HttpStreamHandler?
+    public func createDefaultRequestHandler() -> HttpRequestHandler?
     {
-        return Http1StreamHandler()
+        return Http1RequestHandler()
     }
 }

@@ -1,7 +1,12 @@
 
 public class Header {
-    var name: String = ""
-    var values: [String] = []
+    var name = ""
+    var values = [String]()
+
+    public init(name: String)
+    {
+        self.name = name
+    }
 
     func getName() -> String {
         return name
