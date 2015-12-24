@@ -10,17 +10,17 @@ public class HttpConnection // : Connection
 {
     public var delegate : HttpConnectionDelegate?
 
-    private var pipe : Pipe?
+    private var writer : Writer
     private var buffReader : BufferedReader
     public var transport : ClientTransport?
     private var currentRequestHandler : HttpRequestHandler?
     private var currentRequest = HttpRequest()
     private var currentResponse = HttpResponse(version: "HTTP/1.1")
     
-    public init(_ pipe : Pipe)
+    public init(reader: Reader, writer: Writer)
     {
-        self.pipe = pipe
-        buffReader = BufferedReader(reader: pipe, bufferSize: BUFFER_LENGTH)
+        self.writer = writer
+        self.buffReader = BufferedReader(reader: reader, bufferSize: BUFFER_LENGTH)
     }
 
     /**

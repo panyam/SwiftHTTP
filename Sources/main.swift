@@ -7,14 +7,16 @@ srandom(UInt32(clock()))
 import CoreFoundation
 import SwiftIO
 
-class HttpConnectionFactory : ConnectionFactory {
-    func createNewConnection() -> Connection {
-        return Pipe()
+class HttpStreamFactory : StreamFactory {
+    func createNewStream() -> Stream {
+        let stream = SimpleStream()
+        stream.producer = StreamWriter(stream)
+        stream.consumer = StreamReader(stream)
+        return stream
     }
     
-    func connectionStarted(connection: Connection) {
-        let pipe = connection as! Pipe
-        let httpconn = HttpConnection(pipe)
+    func streamStarted(stream: Stream) {
+        let httpconn = HttpConnection(reader: stream.consumer as! Reader, writer: stream.producer as! Writer)
         connections.append(httpconn)
         httpconn.serve()
     }
@@ -23,7 +25,7 @@ class HttpConnectionFactory : ConnectionFactory {
 var connections = [HttpConnection]()
 
 var server = CFSocketServerTransport(nil)
-server.connectionFactory = HttpConnectionFactory()
+server.streamFactory = HttpStreamFactory()
 server.start()
 
 //
