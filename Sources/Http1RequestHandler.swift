@@ -19,29 +19,13 @@ public class Http1RequestHandler : HttpRequestHandler
         // 2. Set the body writer
         // 3. Close the response once it is done with it
         print("Handling request: \(request.method) \(request.requestTarget)")
-        response.headers.forKey("Content-Type", create: true)?.setValue("text/text")
-        response.setBodyWriter(StringBodyWriter("\(request.requestTarget) - Hello World"))
+        if request.requestTarget == "/favicon.ico" {
+            // 404
+            response.setStatus(404, "Not Found")
+        } else {
+            response.headers.forKey("Content-Type", create: true)?.setValue(MimeType.typeForExtension(".html"))
+            response.setBodyWriter(FileBodyWriter("/Users/spanyam/personal/swiftli/tests/static/index.html"))
+        }
         response.close()
-        // see
-        // the following need to happen to handle a 1.0/1.1 typed request:
-        // 1. Set response code and message
-        // 2. Set any headers we need
-        // 3. write body
-        //
-        // First 2 are straight forward. 3rd is the tricky one.  We have the following scenarios:
-        // 1. We know the body length and it is small so 
-
-//        let statusCode = 200
-//        response.setStatus(statusCode, nil)
-//
-//        // set transfer encoder so it can handle how data is sent out
-//        // There can only be transfer encoding *or* content-length
-//        response.transferEncoder = encoder chain followed by chunked (always appears exactly once and at the end)
-//        while data_available {
-//            data = getdata()
-//            response.writer.write(data)
-//        }
-//        // to indicate response has finished
-//        response.close()
     }
 }

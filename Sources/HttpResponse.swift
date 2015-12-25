@@ -76,8 +76,11 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
             delegate?.headersWritten(self)
         }
         
-        // now write the body
-        if let writer = self.writer
+        // now write the body if any
+        if self.bodyWriter == nil {
+            self.delegate?.bodyWritten(self)
+        }
+        else if let writer = self.writer
         {
             self.bodyWriter?.write(writer, callback: { (numWritten, error) -> () in
                 print("Response written")

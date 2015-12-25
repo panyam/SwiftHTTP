@@ -21,6 +21,7 @@
 		F7F130441C2A503300CA528A /* HttpTransferCoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F130431C2A503300CA528A /* HttpTransferCoder.swift */; };
 		F7F1304A1C2B7C3D00CA528A /* StringBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F130491C2B7C3D00CA528A /* StringBody.swift */; };
 		F7F130501C2CCAF200CA528A /* HttpBodyWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */; };
+		F7F130541C2D3CF000CA528A /* MimeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F130531C2D3CF000CA528A /* MimeType.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -52,6 +53,7 @@
 		F7F130431C2A503300CA528A /* HttpTransferCoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpTransferCoder.swift; sourceTree = "<group>"; };
 		F7F130491C2B7C3D00CA528A /* StringBody.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StringBody.swift; sourceTree = "<group>"; };
 		F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpBodyWriter.swift; sourceTree = "<group>"; };
+		F7F130531C2D3CF000CA528A /* MimeType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MimeType.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 				F73A8C8D1C225A6C00352333 /* Http1RequestHandler.swift */,
 				F7F130491C2B7C3D00CA528A /* StringBody.swift */,
 				F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */,
+				F7F130531C2D3CF000CA528A /* MimeType.swift */,
 			);
 			name = Sources;
 			path = ../Sources;
@@ -179,6 +182,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F73A8C8E1C225A6C00352333 /* Http1RequestHandler.swift in Sources */,
+				F7F130541C2D3CF000CA528A /* MimeType.swift in Sources */,
 				F7CF63FD1C1E729300493204 /* HttpHeaders.swift in Sources */,
 				F7CF63FF1C1E729300493204 /* HttpMessage.swift in Sources */,
 				F7B1D0C71C21B8B700DEBD83 /* HttpConnectionDelegate.swift in Sources */,

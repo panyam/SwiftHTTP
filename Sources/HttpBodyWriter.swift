@@ -24,7 +24,7 @@ public protocol HttpBodyWriter {
      * If no content length is returned then it is upto the writer
      * to transfer encode the data as it sees fit.
      */
-    func contentLength() -> Int?
+    func contentLength() -> UInt64?
 }
 
 /**
@@ -39,8 +39,9 @@ public class StringBodyWriter : HttpBodyWriter
         value = stringValue
     }
     
-    public func contentLength() -> Int? {
-        return value.lengthOfBytesUsingEncoding(NSUTF8StringEncoding)
+    public func contentLength() -> UInt64? {
+        let len = value.lengthOfBytesUsingEncoding(NSUTF8StringEncoding)
+        return UInt64(len)
     }
     
     public func write(writer: Writer, callback: ((numWritten: Int, error: ErrorType?) -> ())?) {
@@ -53,18 +54,36 @@ public class StringBodyWriter : HttpBodyWriter
 public class FileBodyWriter : HttpBodyWriter
 {
     var filePath : String
+    var fileSize : UInt64?
+    var dataBuffer = BufferType.alloc(DEFAULT_BUFFER_LENGTH)
+    
+    var reader : StreamReader
     public init(_ path: String)
     {
         filePath = path
+        fileSize = SizeOfFile(filePath)
+        reader = FileReader(filePath)
     }
     
-    public func contentLength() -> Int? {
-        return 0
+    public func contentLength() -> UInt64? {
+        return fileSize
     }
     
     public func write(writer: Writer, callback: ((numWritten: Int, error: ErrorType?) -> ())?) {
-//        writer.writeString(value) { (buffer, length, error) -> () in
-//            callback?(numWritten: length, error: error)
-//        }
+        var totalWritten = 0
+        reader.read(dataBuffer, length: DEFAULT_BUFFER_LENGTH) { (length, error) -> () in
+            if error != nil || length == 0 {
+                callback?(numWritten: totalWritten, error: error)
+            } else {
+                writer.write(self.dataBuffer, length: length, callback: { (length, error) -> () in
+                    if error != nil {
+                        callback?(numWritten: totalWritten, error: error)
+                    } else {
+                        totalWritten += length
+                        self.write(writer, callback: callback)
+                    }
+                })
+            }
+        }
     }
 }
