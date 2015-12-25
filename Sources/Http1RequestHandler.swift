@@ -12,7 +12,17 @@ public class Http1RequestHandler : HttpRequestHandler
 {
     public func handleRequest(request: HttpRequest, response: HttpResponse)
     {
-        print("Handling request...")
+        // find the resource handler for this request
+        // dispatch to it
+        // it will be the resource hadnler's responsibility to:
+        // 1. Set headers
+        // 2. Set the body writer
+        // 3. Close the response once it is done with it
+        print("Handling request: \(request.method) \(request.requestTarget)")
+        response.headers.forKey("Content-Type", create: true)?.setValue("text/text")
+        response.setBodyWriter(StringBodyWriter("\(request.requestTarget) - Hello World"))
+        response.close()
+        // see
         // the following need to happen to handle a 1.0/1.1 typed request:
         // 1. Set response code and message
         // 2. Set any headers we need

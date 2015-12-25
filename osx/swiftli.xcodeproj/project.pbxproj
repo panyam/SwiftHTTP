@@ -19,6 +19,8 @@
 		F7CF64011C1E729300493204 /* HttpResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F91C1E729300493204 /* HttpResponse.swift */; };
 		F7CF64031C1E729300493204 /* Streams.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63FB1C1E729300493204 /* Streams.swift */; };
 		F7F130441C2A503300CA528A /* HttpTransferCoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F130431C2A503300CA528A /* HttpTransferCoder.swift */; };
+		F7F1304A1C2B7C3D00CA528A /* StringBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F130491C2B7C3D00CA528A /* StringBody.swift */; };
+		F7F130501C2CCAF200CA528A /* HttpBodyWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -48,6 +50,8 @@
 		F7CF63FB1C1E729300493204 /* Streams.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Streams.swift; sourceTree = "<group>"; };
 		F7F1303F1C2A1E8200CA528A /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		F7F130431C2A503300CA528A /* HttpTransferCoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpTransferCoder.swift; sourceTree = "<group>"; };
+		F7F130491C2B7C3D00CA528A /* StringBody.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StringBody.swift; sourceTree = "<group>"; };
+		F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpBodyWriter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +106,8 @@
 				F7B1D0C61C21B8B700DEBD83 /* HttpConnectionDelegate.swift */,
 				F73A8C8B1C2224C600352333 /* HttpRequestHandler.swift */,
 				F73A8C8D1C225A6C00352333 /* Http1RequestHandler.swift */,
+				F7F130491C2B7C3D00CA528A /* StringBody.swift */,
+				F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */,
 			);
 			name = Sources;
 			path = ../Sources;
@@ -176,8 +182,10 @@
 				F7CF63FD1C1E729300493204 /* HttpHeaders.swift in Sources */,
 				F7CF63FF1C1E729300493204 /* HttpMessage.swift in Sources */,
 				F7B1D0C71C21B8B700DEBD83 /* HttpConnectionDelegate.swift in Sources */,
+				F7F1304A1C2B7C3D00CA528A /* StringBody.swift in Sources */,
 				F7CF64001C1E729300493204 /* HttpRequest.swift in Sources */,
 				F7F130441C2A503300CA528A /* HttpTransferCoder.swift in Sources */,
+				F7F130501C2CCAF200CA528A /* HttpBodyWriter.swift in Sources */,
 				F7CF63FC1C1E729300493204 /* HttpConnection.swift in Sources */,
 				F7CF64011C1E729300493204 /* HttpResponse.swift in Sources */,
 				F73A8C8C1C2224C600352333 /* HttpRequestHandler.swift in Sources */,

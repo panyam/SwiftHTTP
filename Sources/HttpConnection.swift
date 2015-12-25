@@ -3,24 +3,22 @@ import SwiftIO
 
 let CR : UInt8 = 13
 let LF : UInt8 = 10
-let CRLF : String = "\0d0a"
-let BUFFER_LENGTH = 8192
+let CRLF : String = "\r\n"
 
-public class HttpConnection // : Connection
+public class HttpConnection : HttpResponseDelegate
 {
     public var delegate : HttpConnectionDelegate?
 
     private var writer : Writer
     private var buffReader : BufferedReader
-    public var transport : ClientTransport?
     private var currentRequestHandler : HttpRequestHandler?
     private var currentRequest = HttpRequest()
-    private var currentResponse = HttpResponse(version: "HTTP/1.1")
+    private var currentResponse : HttpResponse?
     
     public init(reader: Reader, writer: Writer)
     {
         self.writer = writer
-        self.buffReader = BufferedReader(reader: reader, bufferSize: BUFFER_LENGTH)
+        self.buffReader = BufferedReader(reader)
     }
 
     /**
@@ -36,7 +34,7 @@ public class HttpConnection // : Connection
             if self.currentRequestHandler == nil {
                 self.currentRequestHandler = self.createDefaultRequestHandler()
             }
-            self.currentRequestHandler!.handleRequest(self.currentRequest, response: self.currentResponse)
+            self.currentRequestHandler!.handleRequest(self.currentRequest, response: self.currentResponse!)
         }
     }
     
@@ -65,6 +63,8 @@ public class HttpConnection // : Connection
         }
         
         currentResponse = HttpResponse(version: currentRequest.version)
+        currentResponse!.delegate = self
+        currentResponse!.setWriter(writer)
 
         delegate?.didStartNewRequest(self, method: parts[0], requestTarget: parts[1], version: parts[2])
     }
@@ -107,7 +107,7 @@ public class HttpConnection // : Connection
         {
             let headerKey = currentLine.substringToIndex(colIndex).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
             let headerValue = currentLine.substringFromIndex(colIndex.advancedBy(1)).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
-            currentRequest.headerForKey(headerKey, create: true)?.addValue(headerValue)
+            currentRequest.headers.forKey(headerKey, create: true)?.addValue(headerValue)
             delegate?.didReceiveHeader(self, key: headerKey, value: headerValue)
         } else {
             // TODO: ignore or reject bad header lines?
@@ -129,5 +129,32 @@ public class HttpConnection // : Connection
     public func createDefaultRequestHandler() -> HttpRequestHandler?
     {
         return Http1RequestHandler()
+    }
+    
+    // HttpResponseDelegate methods
+    /**
+    * Called after the headers for a response have been written
+    */
+    public func headersWritten(response: HttpResponse)
+    {
+    }
+    
+    /**
+     * Called after the body of the response has been written and no more bytes can be written.
+     * Essentially the request handling is complete
+     */
+    public func bodyWritten(response: HttpResponse)
+    {
+        // TODO: close connection if necessary or start serving of a new one
+        if currentRequest.version.lowercaseString == "http/1.0" ||
+            currentRequest.headers.forKey("Connection")?.firstValue()?.lowercaseString == "close" {
+//            buffReader.stream.close()
+        } else {
+            self.serve()
+//            let currRunLoop = CFRunLoopGetCurrent()
+//            CFRunLoopPerformBlock(currRunLoop, kCFRunLoopCommonModes) { () -> Void in
+//            }
+//            CFRunLoopWakeUp(currRunLoop)
+        }
     }
 }

@@ -8,14 +8,9 @@ import CoreFoundation
 import SwiftIO
 
 class HttpStreamFactory : StreamFactory {
-    func createNewStream() -> Stream {
-        let stream = SimpleStream()
-        stream.producer = StreamWriter(stream)
+    func streamStarted(var stream: Stream) {
         stream.consumer = StreamReader(stream)
-        return stream
-    }
-    
-    func streamStarted(stream: Stream) {
+        stream.producer = StreamWriter(stream)
         let httpconn = HttpConnection(reader: stream.consumer as! Reader, writer: stream.producer as! Writer)
         connections.append(httpconn)
         httpconn.serve()
@@ -24,7 +19,8 @@ class HttpStreamFactory : StreamFactory {
 
 var connections = [HttpConnection]()
 
-var server = CFSocketServerTransport(nil)
+var server = CFSocketServer(nil)
+server.serverPort = 8888
 server.streamFactory = HttpStreamFactory()
 server.start()
 
@@ -54,6 +50,6 @@ server.start()
 //signal(SIGKILL, signal_handler)
 
 while CFRunLoopRunInMode(kCFRunLoopDefaultMode, 5, false) != CFRunLoopRunResult.Finished {
-    print("HTTP Clocked ticked...")
+//    print("HTTP Clocked ticked...")
 }
 
