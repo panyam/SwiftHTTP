@@ -4,11 +4,6 @@ import SwiftIO
 public protocol HttpResponseDelegate
 {
     /**
-     * Called after the headers for a response have been written
-     */
-    func headersWritten(response: HttpResponse)
-
-    /**
      * Called after the body of the response has been written and no more bytes can be written. 
      * Essentially the request handling is complete
      */
@@ -70,15 +65,11 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
      */
     public func close()
     {
-        if !writtenHeaders {
-            flushHeaders()
-            writtenHeaders = true
-            delegate?.headersWritten(self)
-        }
-        
+        flushHeaders()
+
         // now write the body if any
         if self.bodyWriter == nil {
-            self.delegate?.bodyWritten(self)
+//            self.delegate?.bodyWritten(self)
         }
         else if let writer = self.writer
         {
@@ -91,28 +82,33 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
     
     private func flushHeaders()
     {
-        // see if content length was set and if not, does it need to be set?
-        let contentLength = headers.forKey("Content-Length", create: false)
-        if contentLength == nil {
-            // wasnt set so see if needs to be set
-            if let cl = bodyWriter?.contentLength() {
+        if !writtenHeaders {
+            writtenHeaders = true
+            // see if content length was set and if not, does it need to be set?
+            if bodyWriter == nil
+            {
+                // set content length to 0
+                headers.forKey("Content-Length", create: true)?.setValue("0")
+                headers.removeHeader("Transfer-Encoding")
+            }
+            else if let _ = headers.forKey("Content-Length", create: false) {
+                // if a content length was provided then remove the transfer encoding
+                headers.removeHeader("Transfer-Encoding")
+            }
+            else if let cl = bodyWriter?.contentLength() {
                 headers.forKey("Content-Length", create: true)?.setValue(String(format: "%d", cl))
-
+                
                 // remove TransferEncoding header as content length is known
                 headers.removeHeader("Transfer-Encoding")
-            } else {
-                headers.forKey("Transfer-Encoding", create: true)?.setValue("chunked")
             }
-        }
-        
-        // write the status line first
-        if let writer = self.writer
-        {
-            writer.writeString("\(httpVersion) \(statusCode) \(reasonPhrase)", callback: nil)
-            writer.writeString(CRLF, callback: nil)
-
-            writer.writeString(headers.description, callback: nil)
-            writer.writeString(CRLF, callback: nil)
+            
+            // write the status line first
+            if let writer = self.writer
+            {
+                writer.writeString("\(httpVersion) \(statusCode) \(reasonPhrase)\(CRLF)")
+                writer.writeString(headers.description)
+                writer.writeString(CRLF)
+            }
         }
     }
 }

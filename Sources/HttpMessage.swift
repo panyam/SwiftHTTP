@@ -1,16 +1,21 @@
 
+/**
+ * A simple collection of headers along with their values.
+ */
 public class HeaderCollection : CustomStringConvertible
 {
     private var headers = [String: Header]()
     
-    public init()
-    {
-    }
-    
+    /**
+     * Return the header for a particular key.
+     */
     public func forKey(key: String) -> Header? {
         return forKey(key, create: false)
     }
     
+    /**
+     * Return the header for a particular key and optionally create it if it does not exist
+     */
     public func forKey(key: String, create: Bool) -> Header? {
         if let header = headers[key] {
             return header
@@ -21,11 +26,17 @@ public class HeaderCollection : CustomStringConvertible
         return headers[key]
     }
     
+    /**
+     * Removes all values for a header by the given name.
+     */
     public func removeHeader(key: String)
     {
         headers.removeValueForKey(key)
     }
     
+    /**
+     * Custom description of this header collection.
+     */
     public var description : String {
         var out : String = ""
         // write the headers

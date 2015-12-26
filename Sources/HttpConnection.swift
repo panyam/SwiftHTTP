@@ -5,13 +5,13 @@ let CR : UInt8 = 13
 let LF : UInt8 = 10
 let CRLF : String = "\r\n"
 
+public typealias HttpRequestHandler = (request: HttpRequest, response: HttpResponse) -> Void
+
 public class HttpConnection : HttpResponseDelegate
 {
-    public var delegate : HttpConnectionDelegate?
-
     private var writer : Writer
     private var buffReader : BufferedReader
-    private var currentRequestHandler : HttpRequestHandler?
+    public var requestHandler : HttpRequestHandler?
     private var currentRequest = HttpRequest()
     private var currentResponse : HttpResponse?
     
@@ -30,11 +30,13 @@ public class HttpConnection : HttpResponseDelegate
         parseStartLineAndHeaders { (error) -> () in
             // ready to read body and handle it!
             print("Headers received...")
-            self.currentRequestHandler = self.delegate?.createRequestHandler(self, request: self.currentRequest)
-            if self.currentRequestHandler == nil {
-                self.currentRequestHandler = self.createDefaultRequestHandler()
+            if self.requestHandler == nil {
+                // send a 404
+                self.currentResponse?.setStatus(404, "Not Found")
+                self.currentResponse?.close()
+            } else {
+                self.requestHandler?(request: self.currentRequest, response: self.currentResponse!)
             }
-            self.currentRequestHandler!.handleRequest(self.currentRequest, response: self.currentResponse!)
         }
     }
     
@@ -65,8 +67,6 @@ public class HttpConnection : HttpResponseDelegate
         currentResponse = HttpResponse(version: currentRequest.version)
         currentResponse!.delegate = self
         currentResponse!.setWriter(writer)
-
-        delegate?.didStartNewRequest(self, method: parts[0], requestTarget: parts[1], version: parts[2])
     }
     
     private func processHeaders(callback: (error: ErrorType?) -> ())
@@ -83,8 +83,6 @@ public class HttpConnection : HttpResponseDelegate
                 if !self.validateHeaders() {
                     callback(error: nil)
                 } else {
-                    self.delegate?.didReceiveHeaders(self)
-                    
                     // now the next bit
                     callback(error: nil)
                 }
@@ -108,7 +106,6 @@ public class HttpConnection : HttpResponseDelegate
             let headerKey = currentLine.substringToIndex(colIndex).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
             let headerValue = currentLine.substringFromIndex(colIndex.advancedBy(1)).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
             currentRequest.headers.forKey(headerKey, create: true)?.addValue(headerValue)
-            delegate?.didReceiveHeader(self, key: headerKey, value: headerValue)
         } else {
             // TODO: ignore or reject bad header lines?
         }
@@ -126,19 +123,6 @@ public class HttpConnection : HttpResponseDelegate
         return true;
     }
     
-    public func createDefaultRequestHandler() -> HttpRequestHandler?
-    {
-        return Http1RequestHandler()
-    }
-    
-    // HttpResponseDelegate methods
-    /**
-    * Called after the headers for a response have been written
-    */
-    public func headersWritten(response: HttpResponse)
-    {
-    }
-    
     /**
      * Called after the body of the response has been written and no more bytes can be written.
      * Essentially the request handling is complete
@@ -151,10 +135,6 @@ public class HttpConnection : HttpResponseDelegate
 //            buffReader.stream.close()
         } else {
             self.serve()
-//            let currRunLoop = CFRunLoopGetCurrent()
-//            CFRunLoopPerformBlock(currRunLoop, kCFRunLoopCommonModes) { () -> Void in
-//            }
-//            CFRunLoopWakeUp(currRunLoop)
         }
     }
 }

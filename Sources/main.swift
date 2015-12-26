@@ -1,55 +1,25 @@
 
-#if os(Linux)
-import Glibc
-srandom(UInt32(clock()))
-#endif
-
-import CoreFoundation
 import SwiftIO
 
-class HttpStreamFactory : StreamFactory {
-    func streamStarted(var stream: Stream) {
-        stream.consumer = StreamReader(stream)
-        stream.producer = StreamWriter(stream)
-        let httpconn = HttpConnection(reader: stream.consumer as! Reader, writer: stream.producer as! Writer)
-        connections.append(httpconn)
-        httpconn.serve()
+let server = HttpServer()
+server.serve{ (request, response) -> Void in
+    // find the resource handler for this request
+    // dispatch to it
+    // it will be the resource hadnler's responsibility to:
+    // 1. Set headers
+    // 2. Set the body writer
+    // 3. Close the response once it is done with it
+    print("Handling request: \(request.method) \(request.requestTarget)")
+    if request.requestTarget == "/favicon.ico" {
+        // 404
+        response.setStatus(404, "Not Found")
+    } else {
+        response.headers.forKey("Content-Type", create: true)?.setValue(MimeType.typeForExtension(".html"))
+        response.setBodyWriter(FileBodyWriter("/Users/spanyam/personal/swiftli/tests/static/index.html"))
     }
+    response.close()
 }
 
-var connections = [HttpConnection]()
-
-var server = CFSocketServer(nil)
-server.serverPort = 8888
-server.streamFactory = HttpStreamFactory()
-server.start()
-
-//
-//func signal_handler(signo: Int32) {
-//    if signo == SIGINT {
-//        print("SIGINT Received")
-//        server.stop()
-//    }
-//    else if signo == SIGSTOP {
-//        print("SIGSTOP Received")
-//        server.stop()
-//    }
-//    else if signo == SIGTERM {
-//        print("SIGTERM Received")
-//        server.stop()
-//    }
-//    else if signo == SIGKILL {
-//        print("SIGKILL Received")
-//        server.stop()
-//    }
-//}
-//
-//signal(SIGINT, signal_handler)
-//signal(SIGSTOP, signal_handler)
-//signal(SIGTERM, signal_handler)
-//signal(SIGKILL, signal_handler)
-
-while CFRunLoopRunInMode(kCFRunLoopDefaultMode, 5, false) != CFRunLoopRunResult.Finished {
-//    print("HTTP Clocked ticked...")
-}
+// This has to be started
+CoreFoundationRunLoop.defaultRunLoop().start()
 
