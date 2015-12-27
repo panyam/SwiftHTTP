@@ -15,12 +15,11 @@
 		F769F7811C30A23100A59A75 /* HttpResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7731C30A23100A59A75 /* HttpResponse.swift */; };
 		F769F7821C30A23100A59A75 /* HttpServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7741C30A23100A59A75 /* HttpServer.swift */; };
 		F769F7831C30A23100A59A75 /* HttpTransferCoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7751C30A23100A59A75 /* HttpTransferCoder.swift */; };
-		F769F7841C30A23100A59A75 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7761C30A23100A59A75 /* main.swift */; };
 		F769F7851C30A23100A59A75 /* MimeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7771C30A23100A59A75 /* MimeType.swift */; };
-		F769F7861C30A23100A59A75 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7781C30A23100A59A75 /* Router.swift */; };
-		F769F7871C30A23100A59A75 /* StaticFileHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7791C30A23100A59A75 /* StaticFileHandler.swift */; };
-		F769F7881C30A23100A59A75 /* Streams.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F77A1C30A23100A59A75 /* Streams.swift */; };
-		F769F7891C30A23100A59A75 /* StringBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F77B1C30A23100A59A75 /* StringBody.swift */; };
+		F769F78C1C30A29200A59A75 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F78B1C30A29200A59A75 /* main.swift */; };
+		F769F7901C30A30900A59A75 /* StaticFileHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F78E1C30A30900A59A75 /* StaticFileHandler.swift */; };
+		F769F7911C30A30900A59A75 /* StringBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F78F1C30A30900A59A75 /* StringBody.swift */; };
+		F769F7931C30A32B00A59A75 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7921C30A32B00A59A75 /* Router.swift */; };
 		F7B1D0C51C21024300DEBD83 /* SwiftIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7B1D0C41C21024300DEBD83 /* SwiftIO.framework */; };
 /* End PBXBuildFile section */
 
@@ -45,12 +44,11 @@
 		F769F7731C30A23100A59A75 /* HttpResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpResponse.swift; path = ../Sources/Core/HttpResponse.swift; sourceTree = "<group>"; };
 		F769F7741C30A23100A59A75 /* HttpServer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpServer.swift; path = ../Sources/Core/HttpServer.swift; sourceTree = "<group>"; };
 		F769F7751C30A23100A59A75 /* HttpTransferCoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpTransferCoder.swift; path = ../Sources/Core/HttpTransferCoder.swift; sourceTree = "<group>"; };
-		F769F7761C30A23100A59A75 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = main.swift; path = ../Sources/Core/main.swift; sourceTree = "<group>"; };
 		F769F7771C30A23100A59A75 /* MimeType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MimeType.swift; path = ../Sources/Core/MimeType.swift; sourceTree = "<group>"; };
-		F769F7781C30A23100A59A75 /* Router.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Router.swift; path = ../Sources/Core/Router.swift; sourceTree = "<group>"; };
-		F769F7791C30A23100A59A75 /* StaticFileHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StaticFileHandler.swift; path = ../Sources/Core/StaticFileHandler.swift; sourceTree = "<group>"; };
-		F769F77A1C30A23100A59A75 /* Streams.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Streams.swift; path = ../Sources/Core/Streams.swift; sourceTree = "<group>"; };
-		F769F77B1C30A23100A59A75 /* StringBody.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StringBody.swift; path = ../Sources/Core/StringBody.swift; sourceTree = "<group>"; };
+		F769F78B1C30A29200A59A75 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		F769F78E1C30A30900A59A75 /* StaticFileHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StaticFileHandler.swift; sourceTree = "<group>"; };
+		F769F78F1C30A30900A59A75 /* StringBody.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StringBody.swift; sourceTree = "<group>"; };
+		F769F7921C30A32B00A59A75 /* Router.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
 		F7B1D0C41C21024300DEBD83 /* SwiftIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftIO.framework; path = "../../../Library/Developer/Xcode/DerivedData/swiftli-agzelxuwcvqtmhgglneebflmmofu/Build/Products/Debug/SwiftIO.framework"; sourceTree = "<group>"; };
 		F7CF63921C1E715000493204 /* swiftli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = swiftli; sourceTree = BUILT_PRODUCTS_DIR; };
 		F7F1303F1C2A1E8200CA528A /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -77,6 +75,24 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		F769F78A1C30A29200A59A75 /* Demos */ = {
+			isa = PBXGroup;
+			children = (
+				F769F78B1C30A29200A59A75 /* main.swift */,
+			);
+			path = Demos;
+			sourceTree = "<group>";
+		};
+		F769F78D1C30A30900A59A75 /* Handlers */ = {
+			isa = PBXGroup;
+			children = (
+				F769F7921C30A32B00A59A75 /* Router.swift */,
+				F769F78E1C30A30900A59A75 /* StaticFileHandler.swift */,
+				F769F78F1C30A30900A59A75 /* StringBody.swift */,
+			);
+			path = Handlers;
+			sourceTree = "<group>";
+		};
 		F7CF63891C1E715000493204 = {
 			isa = PBXGroup;
 			children = (
@@ -98,6 +114,8 @@
 			isa = PBXGroup;
 			children = (
 				F7CF64061C1E73BD00493204 /* Core */,
+				F769F78D1C30A30900A59A75 /* Handlers */,
+				F769F78A1C30A29200A59A75 /* Demos */,
 			);
 			name = Sources;
 			path = ../Sources;
@@ -114,12 +132,7 @@
 				F769F7731C30A23100A59A75 /* HttpResponse.swift */,
 				F769F7741C30A23100A59A75 /* HttpServer.swift */,
 				F769F7751C30A23100A59A75 /* HttpTransferCoder.swift */,
-				F769F7761C30A23100A59A75 /* main.swift */,
 				F769F7771C30A23100A59A75 /* MimeType.swift */,
-				F769F7781C30A23100A59A75 /* Router.swift */,
-				F769F7791C30A23100A59A75 /* StaticFileHandler.swift */,
-				F769F77A1C30A23100A59A75 /* Streams.swift */,
-				F769F77B1C30A23100A59A75 /* StringBody.swift */,
 			);
 			name = Core;
 			path = ../osx;
@@ -182,20 +195,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F769F7861C30A23100A59A75 /* Router.swift in Sources */,
 				F769F7811C30A23100A59A75 /* HttpResponse.swift in Sources */,
-				F769F7881C30A23100A59A75 /* Streams.swift in Sources */,
 				F769F77C1C30A23100A59A75 /* HttpBodyWriter.swift in Sources */,
-				F769F7891C30A23100A59A75 /* StringBody.swift in Sources */,
-				F769F7841C30A23100A59A75 /* main.swift in Sources */,
-				F769F7871C30A23100A59A75 /* StaticFileHandler.swift in Sources */,
 				F769F7851C30A23100A59A75 /* MimeType.swift in Sources */,
+				F769F7901C30A30900A59A75 /* StaticFileHandler.swift in Sources */,
+				F769F7911C30A30900A59A75 /* StringBody.swift in Sources */,
 				F769F7801C30A23100A59A75 /* HttpRequest.swift in Sources */,
+				F769F78C1C30A29200A59A75 /* main.swift in Sources */,
 				F769F7821C30A23100A59A75 /* HttpServer.swift in Sources */,
 				F769F7831C30A23100A59A75 /* HttpTransferCoder.swift in Sources */,
 				F769F77F1C30A23100A59A75 /* HttpMessage.swift in Sources */,
 				F769F77D1C30A23100A59A75 /* HttpConnection.swift in Sources */,
 				F769F77E1C30A23100A59A75 /* HttpHeaders.swift in Sources */,
+				F769F7931C30A32B00A59A75 /* Router.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
