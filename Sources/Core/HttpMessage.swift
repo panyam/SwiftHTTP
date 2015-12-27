@@ -1,8 +1,6 @@
 
-/**
- * A simple collection of headers along with their values.
- */
-public class HeaderCollection : CustomStringConvertible
+
+public class StringMultiMap
 {
     private var headers = [String: Header]()
     
@@ -33,7 +31,13 @@ public class HeaderCollection : CustomStringConvertible
     {
         headers.removeValueForKey(key)
     }
-    
+}
+
+/**
+ * A simple collection of headers along with their values.
+ */
+public class HeaderCollection : StringMultiMap, CustomStringConvertible
+{
     /**
      * Custom description of this header collection.
      */

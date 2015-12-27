@@ -7,8 +7,14 @@ let CRLF : String = "\r\n"
 
 public typealias HttpRequestHandler = (request: HttpRequest, response: HttpResponse) -> Void
 
+public protocol HttpConnectionDelegate
+{
+    func connectionFinished(connection: HttpConnection)
+}
+
 public class HttpConnection : HttpResponseDelegate
 {
+    var delegate : HttpConnectionDelegate?
     private var writer : Writer
     private var buffReader : BufferedReader
     public var requestHandler : HttpRequestHandler?
@@ -127,14 +133,26 @@ public class HttpConnection : HttpResponseDelegate
      * Called after the body of the response has been written and no more bytes can be written.
      * Essentially the request handling is complete
      */
-    public func bodyWritten(response: HttpResponse)
+    public func bodyWritten(response: HttpResponse, error: ErrorType?)
     {
         // TODO: close connection if necessary or start serving of a new one
-        if currentRequest.version.lowercaseString == "http/1.0" ||
-            currentRequest.headers.forKey("Connection")?.firstValue()?.lowercaseString == "close" {
-//            buffReader.stream.close()
-        } else {
+        if error != nil ||
+            currentRequest.version.lowercaseString == "http/1.0" ||
+            currentRequest.headers.forKey("Connection")?.firstValue()?.lowercaseString == "close"
+        {
+            self.delegate?.connectionFinished(self)
+        }
+        else {
+            self.consumeCurrentRequest()
             self.serve()
         }
+    }
+    
+    // TODO: ensure that the entire body of the current request has been read
+    // before starting the next request - part of RFC 2616
+    // One thing to be careful is to place some upper limit on how big this 
+    // can be so it doesnt open up the server to getting DDOSed
+    private func consumeCurrentRequest()
+    {
     }
 }

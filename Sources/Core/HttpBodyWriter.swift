@@ -25,6 +25,12 @@ public protocol HttpBodyWriter {
      * to transfer encode the data as it sees fit.
      */
     func contentLength() -> UInt64?
+    
+    /**
+     * Give the body generator a chance to decorate the response by changing
+     * response codes, headers etc
+     */
+    func decorateResponse(response: HttpResponse)
 }
 
 /**
@@ -49,6 +55,10 @@ public class StringBodyWriter : HttpBodyWriter
             callback?(numWritten: length, error: error)
         }
     }
+    
+    public func decorateResponse(response: HttpResponse) {
+        // does nothing
+    }
 }
 
 public class FileBodyWriter : HttpBodyWriter
@@ -58,6 +68,8 @@ public class FileBodyWriter : HttpBodyWriter
     var dataBuffer = BufferType.alloc(DEFAULT_BUFFER_LENGTH)
     
     var reader : StreamReader
+    var fileAttrs : [String : AnyObject]?
+    
     public init(_ path: String)
     {
         filePath = path
@@ -67,6 +79,26 @@ public class FileBodyWriter : HttpBodyWriter
     
     public func contentLength() -> UInt64? {
         return fileSize
+    }
+    
+    public func decorateResponse(response: HttpResponse) {
+        // TODO: Check file stats and readability etc
+        // check file attributes
+        do {
+            fileAttrs = try NSFileManager.defaultManager().attributesOfItemAtPath(filePath)
+            
+            if fileAttrs == nil {
+                response.setStatus(404, "Not Found")
+            } else {
+                if (fileAttrs![NSFileType] as! String) != NSFileTypeRegular {
+                    // unable to get it so send a Not found
+                    response.setStatus(400, "Bad Request")
+                }
+            }
+        } catch {
+            // unable to get it so send a Not found
+            response.setStatus(400, "Bad Request")
+        }
     }
     
     public func write(writer: Writer, callback: ((numWritten: Int, error: ErrorType?) -> ())?) {

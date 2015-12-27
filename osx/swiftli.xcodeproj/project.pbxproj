@@ -7,19 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F769F7691C2E0EC500A59A75 /* HttpServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7681C2E0EC500A59A75 /* HttpServer.swift */; };
+		F769F77C1C30A23100A59A75 /* HttpBodyWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F76E1C30A23100A59A75 /* HttpBodyWriter.swift */; };
+		F769F77D1C30A23100A59A75 /* HttpConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F76F1C30A23100A59A75 /* HttpConnection.swift */; };
+		F769F77E1C30A23100A59A75 /* HttpHeaders.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7701C30A23100A59A75 /* HttpHeaders.swift */; };
+		F769F77F1C30A23100A59A75 /* HttpMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7711C30A23100A59A75 /* HttpMessage.swift */; };
+		F769F7801C30A23100A59A75 /* HttpRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7721C30A23100A59A75 /* HttpRequest.swift */; };
+		F769F7811C30A23100A59A75 /* HttpResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7731C30A23100A59A75 /* HttpResponse.swift */; };
+		F769F7821C30A23100A59A75 /* HttpServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7741C30A23100A59A75 /* HttpServer.swift */; };
+		F769F7831C30A23100A59A75 /* HttpTransferCoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7751C30A23100A59A75 /* HttpTransferCoder.swift */; };
+		F769F7841C30A23100A59A75 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7761C30A23100A59A75 /* main.swift */; };
+		F769F7851C30A23100A59A75 /* MimeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7771C30A23100A59A75 /* MimeType.swift */; };
+		F769F7861C30A23100A59A75 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7781C30A23100A59A75 /* Router.swift */; };
+		F769F7871C30A23100A59A75 /* StaticFileHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7791C30A23100A59A75 /* StaticFileHandler.swift */; };
+		F769F7881C30A23100A59A75 /* Streams.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F77A1C30A23100A59A75 /* Streams.swift */; };
+		F769F7891C30A23100A59A75 /* StringBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F77B1C30A23100A59A75 /* StringBody.swift */; };
 		F7B1D0C51C21024300DEBD83 /* SwiftIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7B1D0C41C21024300DEBD83 /* SwiftIO.framework */; };
-		F7CF63FC1C1E729300493204 /* HttpConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F41C1E729300493204 /* HttpConnection.swift */; };
-		F7CF63FD1C1E729300493204 /* HttpHeaders.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F51C1E729300493204 /* HttpHeaders.swift */; };
-		F7CF63FE1C1E729300493204 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F61C1E729300493204 /* main.swift */; };
-		F7CF63FF1C1E729300493204 /* HttpMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F71C1E729300493204 /* HttpMessage.swift */; };
-		F7CF64001C1E729300493204 /* HttpRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F81C1E729300493204 /* HttpRequest.swift */; };
-		F7CF64011C1E729300493204 /* HttpResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63F91C1E729300493204 /* HttpResponse.swift */; };
-		F7CF64031C1E729300493204 /* Streams.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CF63FB1C1E729300493204 /* Streams.swift */; };
-		F7F130441C2A503300CA528A /* HttpTransferCoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F130431C2A503300CA528A /* HttpTransferCoder.swift */; };
-		F7F1304A1C2B7C3D00CA528A /* StringBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F130491C2B7C3D00CA528A /* StringBody.swift */; };
-		F7F130501C2CCAF200CA528A /* HttpBodyWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */; };
-		F7F130541C2D3CF000CA528A /* MimeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F130531C2D3CF000CA528A /* MimeType.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -35,21 +37,23 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		F769F7681C2E0EC500A59A75 /* HttpServer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpServer.swift; sourceTree = "<group>"; };
+		F769F76E1C30A23100A59A75 /* HttpBodyWriter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpBodyWriter.swift; path = ../Sources/Core/HttpBodyWriter.swift; sourceTree = "<group>"; };
+		F769F76F1C30A23100A59A75 /* HttpConnection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpConnection.swift; path = ../Sources/Core/HttpConnection.swift; sourceTree = "<group>"; };
+		F769F7701C30A23100A59A75 /* HttpHeaders.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpHeaders.swift; path = ../Sources/Core/HttpHeaders.swift; sourceTree = "<group>"; };
+		F769F7711C30A23100A59A75 /* HttpMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpMessage.swift; path = ../Sources/Core/HttpMessage.swift; sourceTree = "<group>"; };
+		F769F7721C30A23100A59A75 /* HttpRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpRequest.swift; path = ../Sources/Core/HttpRequest.swift; sourceTree = "<group>"; };
+		F769F7731C30A23100A59A75 /* HttpResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpResponse.swift; path = ../Sources/Core/HttpResponse.swift; sourceTree = "<group>"; };
+		F769F7741C30A23100A59A75 /* HttpServer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpServer.swift; path = ../Sources/Core/HttpServer.swift; sourceTree = "<group>"; };
+		F769F7751C30A23100A59A75 /* HttpTransferCoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpTransferCoder.swift; path = ../Sources/Core/HttpTransferCoder.swift; sourceTree = "<group>"; };
+		F769F7761C30A23100A59A75 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = main.swift; path = ../Sources/Core/main.swift; sourceTree = "<group>"; };
+		F769F7771C30A23100A59A75 /* MimeType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MimeType.swift; path = ../Sources/Core/MimeType.swift; sourceTree = "<group>"; };
+		F769F7781C30A23100A59A75 /* Router.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Router.swift; path = ../Sources/Core/Router.swift; sourceTree = "<group>"; };
+		F769F7791C30A23100A59A75 /* StaticFileHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StaticFileHandler.swift; path = ../Sources/Core/StaticFileHandler.swift; sourceTree = "<group>"; };
+		F769F77A1C30A23100A59A75 /* Streams.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Streams.swift; path = ../Sources/Core/Streams.swift; sourceTree = "<group>"; };
+		F769F77B1C30A23100A59A75 /* StringBody.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StringBody.swift; path = ../Sources/Core/StringBody.swift; sourceTree = "<group>"; };
 		F7B1D0C41C21024300DEBD83 /* SwiftIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftIO.framework; path = "../../../Library/Developer/Xcode/DerivedData/swiftli-agzelxuwcvqtmhgglneebflmmofu/Build/Products/Debug/SwiftIO.framework"; sourceTree = "<group>"; };
 		F7CF63921C1E715000493204 /* swiftli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = swiftli; sourceTree = BUILT_PRODUCTS_DIR; };
-		F7CF63F41C1E729300493204 /* HttpConnection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpConnection.swift; sourceTree = "<group>"; };
-		F7CF63F51C1E729300493204 /* HttpHeaders.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpHeaders.swift; sourceTree = "<group>"; };
-		F7CF63F61C1E729300493204 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		F7CF63F71C1E729300493204 /* HttpMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpMessage.swift; sourceTree = "<group>"; };
-		F7CF63F81C1E729300493204 /* HttpRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpRequest.swift; sourceTree = "<group>"; };
-		F7CF63F91C1E729300493204 /* HttpResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpResponse.swift; sourceTree = "<group>"; };
-		F7CF63FB1C1E729300493204 /* Streams.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Streams.swift; sourceTree = "<group>"; };
 		F7F1303F1C2A1E8200CA528A /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
-		F7F130431C2A503300CA528A /* HttpTransferCoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpTransferCoder.swift; sourceTree = "<group>"; };
-		F7F130491C2B7C3D00CA528A /* StringBody.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StringBody.swift; sourceTree = "<group>"; };
-		F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpBodyWriter.swift; sourceTree = "<group>"; };
-		F7F130531C2D3CF000CA528A /* MimeType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MimeType.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,7 +80,7 @@
 		F7CF63891C1E715000493204 = {
 			isa = PBXGroup;
 			children = (
-				F7CF64061C1E73BD00493204 /* Core */,
+				F7CF63F31C1E729300493204 /* Sources */,
 				F7CF63931C1E715000493204 /* Products */,
 				2803102C5113276E6DE0E2DB /* Frameworks */,
 			);
@@ -93,18 +97,7 @@
 		F7CF63F31C1E729300493204 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				F7F130431C2A503300CA528A /* HttpTransferCoder.swift */,
-				F7CF63F41C1E729300493204 /* HttpConnection.swift */,
-				F7CF63F51C1E729300493204 /* HttpHeaders.swift */,
-				F7CF63F61C1E729300493204 /* main.swift */,
-				F7CF63F71C1E729300493204 /* HttpMessage.swift */,
-				F7CF63F81C1E729300493204 /* HttpRequest.swift */,
-				F7CF63F91C1E729300493204 /* HttpResponse.swift */,
-				F7CF63FB1C1E729300493204 /* Streams.swift */,
-				F7F130491C2B7C3D00CA528A /* StringBody.swift */,
-				F7F1304F1C2CCAF200CA528A /* HttpBodyWriter.swift */,
-				F7F130531C2D3CF000CA528A /* MimeType.swift */,
-				F769F7681C2E0EC500A59A75 /* HttpServer.swift */,
+				F7CF64061C1E73BD00493204 /* Core */,
 			);
 			name = Sources;
 			path = ../Sources;
@@ -113,9 +106,23 @@
 		F7CF64061C1E73BD00493204 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				F7CF63F31C1E729300493204 /* Sources */,
+				F769F76E1C30A23100A59A75 /* HttpBodyWriter.swift */,
+				F769F76F1C30A23100A59A75 /* HttpConnection.swift */,
+				F769F7701C30A23100A59A75 /* HttpHeaders.swift */,
+				F769F7711C30A23100A59A75 /* HttpMessage.swift */,
+				F769F7721C30A23100A59A75 /* HttpRequest.swift */,
+				F769F7731C30A23100A59A75 /* HttpResponse.swift */,
+				F769F7741C30A23100A59A75 /* HttpServer.swift */,
+				F769F7751C30A23100A59A75 /* HttpTransferCoder.swift */,
+				F769F7761C30A23100A59A75 /* main.swift */,
+				F769F7771C30A23100A59A75 /* MimeType.swift */,
+				F769F7781C30A23100A59A75 /* Router.swift */,
+				F769F7791C30A23100A59A75 /* StaticFileHandler.swift */,
+				F769F77A1C30A23100A59A75 /* Streams.swift */,
+				F769F77B1C30A23100A59A75 /* StringBody.swift */,
 			);
 			name = Core;
+			path = ../osx;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -144,7 +151,7 @@
 		F7CF638A1C1E715000493204 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0710;
+				LastSwiftUpdateCheck = 0720;
 				LastUpgradeCheck = 0710;
 				ORGANIZATIONNAME = "Sriram Panyam";
 				TargetAttributes = {
@@ -175,18 +182,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F7F130541C2D3CF000CA528A /* MimeType.swift in Sources */,
-				F769F7691C2E0EC500A59A75 /* HttpServer.swift in Sources */,
-				F7CF63FD1C1E729300493204 /* HttpHeaders.swift in Sources */,
-				F7CF63FF1C1E729300493204 /* HttpMessage.swift in Sources */,
-				F7F1304A1C2B7C3D00CA528A /* StringBody.swift in Sources */,
-				F7CF64001C1E729300493204 /* HttpRequest.swift in Sources */,
-				F7F130441C2A503300CA528A /* HttpTransferCoder.swift in Sources */,
-				F7F130501C2CCAF200CA528A /* HttpBodyWriter.swift in Sources */,
-				F7CF63FC1C1E729300493204 /* HttpConnection.swift in Sources */,
-				F7CF64011C1E729300493204 /* HttpResponse.swift in Sources */,
-				F7CF63FE1C1E729300493204 /* main.swift in Sources */,
-				F7CF64031C1E729300493204 /* Streams.swift in Sources */,
+				F769F7861C30A23100A59A75 /* Router.swift in Sources */,
+				F769F7811C30A23100A59A75 /* HttpResponse.swift in Sources */,
+				F769F7881C30A23100A59A75 /* Streams.swift in Sources */,
+				F769F77C1C30A23100A59A75 /* HttpBodyWriter.swift in Sources */,
+				F769F7891C30A23100A59A75 /* StringBody.swift in Sources */,
+				F769F7841C30A23100A59A75 /* main.swift in Sources */,
+				F769F7871C30A23100A59A75 /* StaticFileHandler.swift in Sources */,
+				F769F7851C30A23100A59A75 /* MimeType.swift in Sources */,
+				F769F7801C30A23100A59A75 /* HttpRequest.swift in Sources */,
+				F769F7821C30A23100A59A75 /* HttpServer.swift in Sources */,
+				F769F7831C30A23100A59A75 /* HttpTransferCoder.swift in Sources */,
+				F769F77F1C30A23100A59A75 /* HttpMessage.swift in Sources */,
+				F769F77D1C30A23100A59A75 /* HttpConnection.swift in Sources */,
+				F769F77E1C30A23100A59A75 /* HttpHeaders.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

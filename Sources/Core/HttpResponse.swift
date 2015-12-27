@@ -7,7 +7,7 @@ public protocol HttpResponseDelegate
      * Called after the body of the response has been written and no more bytes can be written. 
      * Essentially the request handling is complete
      */
-    func bodyWritten(response: HttpResponse)
+    func bodyWritten(response: HttpResponse, error: ErrorType?)
 }
 
 public class HttpResponse : HttpMessage, CustomStringConvertible {
@@ -75,7 +75,7 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
         {
             self.bodyWriter?.write(writer, callback: { (numWritten, error) -> () in
                 print("Response written")
-                self.delegate?.bodyWritten(self)
+                self.delegate?.bodyWritten(self, error: error)
             })
         }
     }
@@ -91,15 +91,21 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
                 headers.forKey("Content-Length", create: true)?.setValue("0")
                 headers.removeHeader("Transfer-Encoding")
             }
-            else if let _ = headers.forKey("Content-Length", create: false) {
-                // if a content length was provided then remove the transfer encoding
-                headers.removeHeader("Transfer-Encoding")
-            }
-            else if let cl = bodyWriter?.contentLength() {
-                headers.forKey("Content-Length", create: true)?.setValue(String(format: "%d", cl))
+            else
+            {
+                if let _ = headers.forKey("Content-Length", create: false) {
+                    // if a content length was provided then remove the transfer encoding
+                    headers.removeHeader("Transfer-Encoding")
+                }
+                else if let cl = bodyWriter?.contentLength() {
+                    headers.forKey("Content-Length", create: true)?.setValue(String(format: "%d", cl))
+                    
+                    // remove TransferEncoding header as content length is known
+                    headers.removeHeader("Transfer-Encoding")
+                }
                 
-                // remove TransferEncoding header as content length is known
-                headers.removeHeader("Transfer-Encoding")
+                // give the body writer a chance to massage the response
+                bodyWriter!.decorateResponse(self)
             }
             
             // write the status line first
