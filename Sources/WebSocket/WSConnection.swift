@@ -8,48 +8,6 @@
 
 import SwiftIO
 
-public class WSMessage
-{
-    /**
-     * Message type being sent
-     */
-    var messageType : UInt8 = 0
-    
-    /**
-     * Returns the length of the message.
-     * If the message length is not known then nil is returned.
-     * If the message length is unknown then the "beginFrame"
-     * method can be called which MUST be return the new frame's 
-     * length as well as whether there are more frames.
-     */
-    public func totalLength() -> Int?
-    {
-        return nil
-    }
-    
-    /**
-     * Reads the body
-     */
-    public func read(data : ReadBufferType, length: Int, callback: IOCallback)
-    {
-    }
-    
-    var extraDataDict = [String : Any]()
-    public func extraData(key: String) -> Any?
-    {
-        return extraDataDict[key]
-    }
-    
-    public func setExtraData(key: String, value: Any?)
-    {
-        if value == nil {
-            extraDataDict.removeValueForKey(key)
-        } else {
-            extraDataDict[key] = value!
-        }
-    }
-}
-
 public typealias WSCallback = (message: WSMessage) -> Void
 
 /**
@@ -72,29 +30,33 @@ public class WSConnection
 
     private var reader: WSFrameReader
     private var writer: Writer
-    private var maxFrameSize = 8192
+    /**
+     * Size of the buffer initially.
+     */
+    private var initialBufferSize = 8192
+    
+    /**
+     * Maximum size the buffer (of unconsumed data can grow upto) before
+     * the connection will be closed with a code 1009.  This is across
+     * all channels (and including control frames)
+     */
+    private var maxBufferSize = 1 << 20
     private var frameWriteQueue = [WSMessageRequest]()
     private var frameReadQueue = [WSMessageRequest]()
     private var currentReadRequest : WSMessageRequest?
     private var currentWriteRequest : WSMessageRequest?
+    private var onMessageCallback : MessageCallback?
+    private var onClosedCallback : ClosedCallback?
     
     public init(_ reader: Reader, writer: Writer)
     {
         self.reader = WSFrameReader(reader)
         self.writer = writer
-    }
-
-    /**
-     * Gets the next message in the stream.
-     * Returns a WSMessageReader via the callback which can be used
-     * to read upto totalLength number of bytes in total.
-     */
-    public func onMessage(callback: MessageCallback)
-    {
-    }
-    
-    public func onClosed(callback : ClosedCallback)
-    {
+        
+        // So at this point we have a frame reader from which *something* can 
+        // consume frames.  So messages (and channels) are a higher level 
+        // abstraction on top of frames.  We have a message object from which
+        // data can be read.   So how to tie these two together?
     }
 
     /**
@@ -103,5 +65,32 @@ public class WSConnection
      */
     public func sendMessage(opcode: UInt8, maskingKey: Int32?, source: Payload, callback: WSCallback)
     {
+    }
+    
+    /**
+     * Gets the next message in the stream.
+     * Returns a WSMessageReader via the callback which can be used
+     * to read upto totalLength number of bytes in total.
+     * This is following a model of only doing the reading if someone is
+     * actually doing the consuming (tree falling in a forest and all that)
+     */
+    public func onMessage(callback: MessageCallback)
+    {
+        onMessageCallback = callback
+        resumeReads()
+    }
+    
+    public func onClosed(callback : ClosedCallback)
+    {
+        onClosedCallback = callback
+        resumeReads()
+    }
+    
+    private func resumeReads()
+    {
+        // ensures that message reading is happening again
+        // here is where frames are read and assembled into messages
+        // also applying account all extension specific processing
+        
     }
 }

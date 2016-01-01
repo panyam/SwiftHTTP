@@ -36,6 +36,11 @@ public class WSEchoHandler : WSConnectionHandler
             if error == nil || endReached
             {
                 // process the data received so far by just echoing it out
+                if length <= 0
+                {
+                    return
+                }
+
                 let source = BufferPayload(buffer: buffer, length: length)
                 self.connection?.sendMessage(message.messageType, maskingKey: 0, source: source, callback: { (message) -> Void in
                     if !endReached {

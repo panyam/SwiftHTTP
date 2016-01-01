@@ -24,8 +24,7 @@ public protocol HttpBody : Payload {
 public class FileBody : FilePayload, HttpBody
 {
     public func decorateResponse(response: HttpResponse) {
-        // TODO: Check file stats and readability etc
-        // check file attributes
+        // TODO: Check file stats and readability and other file attributes
         do {
             fileAttrs = try NSFileManager.defaultManager().attributesOfItemAtPath(filePath)
             
