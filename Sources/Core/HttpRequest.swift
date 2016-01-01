@@ -7,9 +7,8 @@ public class HttpRequest : HttpMessage, CustomStringConvertible {
     private var fullPath : String = ""
     var resourcePath : String = ""
     var fragment : String = ""
-    var queryParams = StringMultiMap()
+    var queryParams = StringMultiMap(caseSensitiveKeys: true)
     var reader : BufferedReader?
-    var extraDataDict = [String : AnyObject]()
 
     public var requestTarget : String {
         get {
@@ -29,7 +28,7 @@ public class HttpRequest : HttpMessage, CustomStringConvertible {
                 {
                     fragment = urlComponents.fragment!
                 }
-                queryParams = StringMultiMap()
+                queryParams.removeAll()
                 if let queryItems = urlComponents.queryItems
                 {
                     queryItems.forEach({ (queryItem) -> () in
@@ -45,15 +44,5 @@ public class HttpRequest : HttpMessage, CustomStringConvertible {
 
     public var description : String {
         return "\(method) \(requestTarget) \(version)\(CRLF)\(headers)"
-    }
-    
-    public func extraData(key: String) -> AnyObject?
-    {
-        return extraDataDict[key]
-    }
-
-    public func setExtraData(key: String, value: AnyObject?)
-    {
-        extraDataDict[key] = value
     }
 }

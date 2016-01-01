@@ -6,7 +6,12 @@
 //  Copyright © 2015 Sriram Panyam. All rights reserved.
 //
 
-import Foundation
+import SwiftIO
+
+public protocol HttpRequestServer
+{
+    func handleRequest(request: HttpRequest, response: HttpResponse) -> Void
+}
 
 public class HttpServer : StreamHandler, HttpConnectionDelegate
 {
@@ -32,14 +37,6 @@ public class HttpServer : StreamHandler, HttpConnectionDelegate
         httpconn.serve()
     }
     
-    public func serve(handler: HttpRequestHandler)
-    {
-        requestHandler = handler
-        socketServer.serverPort = serverPort
-        socketServer.streamHandler = self
-        socketServer.start()
-    }
-    
     public func connectionFinished(connection: HttpConnection) {
         if let index = connections.indexOf({ (conn) -> Bool in return conn === connection })
         {
@@ -48,7 +45,23 @@ public class HttpServer : StreamHandler, HttpConnectionDelegate
             streams.removeAtIndex(index)
         }
     }
+    
+    public func serve(server: HttpRequestServer)
+    {
+        requestHandler = server.handleRequest
+        serve()
+    }
+    
+    public func serve(handler: HttpRequestHandler)
+    {
+        requestHandler = handler
+        serve()
+    }
+    
+    private func serve()
+    {
+        socketServer.serverPort = serverPort
+        socketServer.streamHandler = self
+        socketServer.start()
+    }
 }
-
-import SwiftIO
-

@@ -11,11 +11,11 @@ public protocol HttpResponseDelegate
 }
 
 public class HttpResponse : HttpMessage, CustomStringConvertible {
-    private(set) var statusCode = 200
+    private(set) var statusCode = HttpStatusCode.Ok.rawValue
     private(set) var httpVersion = ""
     private(set) var reasonPhrase = "OK"
     private(set) var writer: Writer?
-    private(set) var bodyWriter: HttpBodyWriter?
+    private(set) var body: HttpBody?
     var delegate: HttpResponseDelegate?
     
     // Have headers been written
@@ -34,9 +34,19 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
         self.writer = writer
     }
 
-    public func setBodyWriter(bodyWriter: HttpBodyWriter)
+    public func setBody(body: HttpBody)
     {
-        self.bodyWriter = bodyWriter
+        self.body = body
+    }
+
+    public func setStatus(code: HttpStatusCode)
+    {
+        setStatus(code.rawValue, nil)
+    }
+    
+    public func setStatus(code: Int)
+    {
+        setStatus(code, nil)
     }
     
     public func setStatus(code: Int, _ reason: String?)
@@ -45,67 +55,69 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
         if !writtenHeaders
         {
             statusCode = code
+            reasonPhrase = "No Reason"
             if let phrase = reason
             {
                 reasonPhrase = phrase
-            } else {
-                reasonPhrase = HttpResponse.defaultReasonPhrase(statusCode)
+            }
+            else if let statusCode = HttpStatusCode(rawValue: code)
+            {
+                reasonPhrase = statusCode.reasonPhrase()!
             }
         }
-    }
-    
-    public static func defaultReasonPhrase(code: Int) -> String
-    {
-        // TODO: find the default reason phrase for the given code
-        return "OK"
     }
 
     /**
      * Closes the responses and flushes any outstanding data.
+     * Either this method can be called or writeHeaders and writeBody can be called 
+     * manually.
      */
     public func close()
     {
-        flushHeaders()
+        writeHeaders()
 
         // now write the body if any
-        if self.bodyWriter == nil {
+        if self.body == nil {
 //            self.delegate?.bodyWritten(self)
         }
         else if let writer = self.writer
         {
-            self.bodyWriter?.write(writer, callback: { (numWritten, error) -> () in
+            self.body?.write(writer) { (error) -> () in
+                // TODO: Have a CappedWriter in place to ensure no more than totalLength number of bytes have been written.
+                // TODO: Ensure chunked encoding
+                // TODO: Do framing of data if required
                 print("Response written")
                 self.delegate?.bodyWritten(self, error: error)
-            })
+            }
         }
     }
     
-    private func flushHeaders()
+    public func writeHeaders()
     {
         if !writtenHeaders {
             writtenHeaders = true
             // see if content length was set and if not, does it need to be set?
-            if bodyWriter == nil
+            if body == nil
             {
                 // set content length to 0
-                headers.forKey("Content-Length", create: true)?.setValue("0")
-                headers.removeHeader("Transfer-Encoding")
+                headers.setValueFor("Content-Length", value: "0")
+                headers.remove("Transfer-Encoding")
             }
             else
             {
                 if let _ = headers.forKey("Content-Length", create: false) {
                     // if a content length was provided then remove the transfer encoding
-                    headers.removeHeader("Transfer-Encoding")
+                    headers.remove("Transfer-Encoding")
                 }
-                else if let cl = bodyWriter?.contentLength() {
-                    headers.forKey("Content-Length", create: true)?.setValue(String(format: "%d", cl))
+                else if let contentLength = body?.totalLength {
+                    headers.setValueFor("Content-Length", value: String(format: "%d", contentLength))
                     
                     // remove TransferEncoding header as content length is known
-                    headers.removeHeader("Transfer-Encoding")
+                    headers.remove("Transfer-Encoding")
                 }
                 
                 // give the body writer a chance to massage the response
-                bodyWriter!.decorateResponse(self)
+                body!.decorateResponse(self)
             }
             
             // write the status line first

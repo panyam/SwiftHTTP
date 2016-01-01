@@ -16,7 +16,7 @@ public class HttpConnection : HttpResponseDelegate
 {
     var delegate : HttpConnectionDelegate?
     private var writer : Writer
-    private var buffReader : BufferedReader
+    private var reader : StatefulReader
     public var requestHandler : HttpRequestHandler?
     private var currentRequest = HttpRequest()
     private var currentResponse : HttpResponse?
@@ -24,7 +24,7 @@ public class HttpConnection : HttpResponseDelegate
     public init(reader: Reader, writer: Writer)
     {
         self.writer = writer
-        self.buffReader = BufferedReader(reader)
+        self.reader = StatefulReader(BufferedReader(reader))
     }
 
     /**
@@ -38,7 +38,7 @@ public class HttpConnection : HttpResponseDelegate
             print("Headers received...")
             if self.requestHandler == nil {
                 // send a 404
-                self.currentResponse?.setStatus(404, "Not Found")
+                self.currentResponse?.setStatus(HttpStatusCode.NotFound)
                 self.currentResponse?.close()
             } else {
                 self.requestHandler?(request: self.currentRequest, response: self.currentResponse!)
@@ -48,7 +48,7 @@ public class HttpConnection : HttpResponseDelegate
     
     private func parseStartLineAndHeaders(callback: (error : ErrorType?) -> ())
     {
-        buffReader.readTillChar(LF) { (str, error) -> () in
+        reader.readTillChar(LF) { (str, error) -> () in
             if error != nil {
                 return callback(error: error)
             }
@@ -77,7 +77,7 @@ public class HttpConnection : HttpResponseDelegate
     
     private func processHeaders(callback: (error: ErrorType?) -> ())
     {
-        buffReader.readTillChar(LF) { (str, error) -> () in
+        reader.readTillChar(LF) { (str, error) -> () in
             if error != nil {
                 callback(error: error)
                 return

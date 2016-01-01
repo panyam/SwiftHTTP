@@ -28,7 +28,7 @@ public class StaticFileHandler
         } else {
             response.headers.forKey("Content-Type", create: true)?.setValue(MimeType.typeForExtension("application/octet-stream"))
         }
-        response.setBodyWriter(FileBodyWriter(fullPath))
+        response.setBody(FileBody(fullPath))
         response.close()
     }
 }
