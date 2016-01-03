@@ -14,41 +14,52 @@ public protocol HttpConnectionDelegate
 
 public class HttpConnection : HttpResponseDelegate
 {
+    /**
+     * An identifier for debugging purposes
+     */
+    public var identifier : String = ""
+    
     var delegate : HttpConnectionDelegate?
-    private var writer : Writer
-    private var reader : StatefulReader
+    private var theWriter : Writer
+    private var theReader : StatefulReader
     public var requestHandler : HttpRequestHandler?
-    private var currentRequest = HttpRequest()
-    private var currentResponse : HttpResponse?
+    private var currentRequest = HttpRequest(nil)
+    private var currentResponse = HttpResponse(nil)
+    
+    public var writer : Writer { get { return theWriter } }
+    public var reader : Reader { get { return theReader } }
     
     public init(reader: Reader, writer: Writer)
     {
-        self.writer = writer
-        self.reader = StatefulReader(BufferedReader(reader))
+        self.theWriter = writer
+        self.theReader = StatefulReader(BufferedReader(reader))
     }
 
     /**
      * Serves a new connection.
      */
-    public func serve() {
-        currentRequest = HttpRequest()
-
+    public func serve()
+    {
+        currentRequest = HttpRequest(self)
+        currentResponse = HttpResponse(self)
         parseStartLineAndHeaders { (error) -> () in
             // ready to read body and handle it!
             print("Headers received...")
             if self.requestHandler == nil {
                 // send a 404
-                self.currentResponse?.setStatus(HttpStatusCode.NotFound)
-                self.currentResponse?.close()
+                self.currentResponse.setStatus(HttpStatusCode.NotFound)
+                self.currentResponse.close()
             } else {
-                self.requestHandler?(request: self.currentRequest, response: self.currentResponse!)
+                print("Connection: \(self.identifier)")
+                print("Headers: \(self.currentRequest)")
+                self.requestHandler?(request: self.currentRequest, response: self.currentResponse)
             }
         }
     }
-    
+
     private func parseStartLineAndHeaders(callback: (error : ErrorType?) -> ())
     {
-        reader.readTillChar(LF) { (str, error) -> () in
+        theReader.readTillChar(LF) { (str, error) -> () in
             if error != nil {
                 return callback(error: error)
             }
@@ -70,14 +81,14 @@ public class HttpConnection : HttpResponseDelegate
             currentRequest.version = parts[2]
         }
         
-        currentResponse = HttpResponse(version: currentRequest.version)
-        currentResponse!.delegate = self
-        currentResponse!.setWriter(writer)
+        currentResponse.setVersion(currentRequest.version)
+        currentResponse.delegate = self
+        currentResponse.setWriter(writer)
     }
     
     private func processHeaders(callback: (error: ErrorType?) -> ())
     {
-        reader.readTillChar(LF) { (str, error) -> () in
+        theReader.readTillChar(LF) { (str, error) -> () in
             if error != nil {
                 callback(error: error)
                 return

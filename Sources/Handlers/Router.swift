@@ -61,7 +61,7 @@ public typealias HeaderNameValuePair = (name: String, value: String)
 //
 //    public func handler() -> HttpRequestHandler
 //    {
-//        return {(request, response) -> Void in
+//        return {(request, response)  in
 //        }
 //    }
 //}

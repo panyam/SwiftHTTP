@@ -1,9 +1,26 @@
 
 import SwiftIO
 
+let MESSAGE_READ_SIZE = 512
+
+public extension WSMessage
+{
+    public var readBuffer : ReadBufferType
+    {
+        get
+        {
+            if extraData("buffer") == nil
+            {
+                let buffer = ReadBufferType.alloc(MESSAGE_READ_SIZE)
+                setExtraData("buffer", value: buffer)
+            }
+            return extraData("buffer") as! ReadBufferType
+        }
+    }
+}
+
 public class WSEchoHandler : WSConnectionHandler
 {
-    let MESSAGE_READ_SIZE = 256
     var reader : StatefulReader?
     var connection : WSConnection?
     
@@ -24,14 +41,9 @@ public class WSEchoHandler : WSConnectionHandler
     
     private func processMessage(message: WSMessage)
     {
-        if message.extraData("buffer") == nil
-        {
-            let buffer = ReadBufferType.alloc(MESSAGE_READ_SIZE)
-            message.setExtraData("buffer", value: buffer)
-        }
-        let buffer = message.extraData("buffer") as! ReadBufferType
+        let buffer = message.readBuffer
 
-        message.read(buffer, length: MESSAGE_READ_SIZE) {(length: Int, error: ErrorType?) in
+        connection?.read(message, buffer: buffer, length: MESSAGE_READ_SIZE) {(length: LengthType, error: ErrorType?) in
             let endReached = IOErrorType.EndReached.equals(error)
             if error == nil || endReached
             {
@@ -42,7 +54,7 @@ public class WSEchoHandler : WSConnectionHandler
                 }
 
                 let source = BufferPayload(buffer: buffer, length: length)
-                self.connection?.sendMessage(message.messageType, maskingKey: 0, source: source, callback: { (message) -> Void in
+                self.connection?.sendMessage(message.messageType, maskingKey: 0, source: source, callback: { (message) in
                     if !endReached {
                         // process message by doing more reads on the message
                         // or call message.discard() to discard the rest of the

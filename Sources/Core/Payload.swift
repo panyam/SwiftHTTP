@@ -72,7 +72,7 @@ public class BufferPayload : Payload
     var buffer : ReadBufferType
     var length : UInt
     
-    convenience public init(buffer : ReadBufferType, length: Int)
+    convenience public init(buffer : ReadBufferType, length: LengthType)
     {
         self.init(buffer: buffer, length: UInt(length))
     }
@@ -105,7 +105,7 @@ public class BufferPayload : Payload
      */
     public func write(writer: Writer, completion: PayloadWriteCallback)
     {
-        writer.write(buffer, length: Int(self.length)) { (length, error) -> () in
+        writer.write(buffer, length: LengthType(self.length)) { (length, error) -> () in
             completion(error: error)
         }
     }

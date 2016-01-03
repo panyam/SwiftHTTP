@@ -21,14 +21,21 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
     // Have headers been written
     private var writtenHeaders = false
     
+    public override func reset()
+    {
+        super.reset()
+        writtenHeaders = false
+    }
+    
     public var description : String {
         return "\(httpVersion) \(statusCode) \(reasonPhrase)\(CRLF)\(headers)"
     }
 
-    public init(version: String) {
-        httpVersion = version
+    public func setVersion(version: String)
+    {
+        self.httpVersion = version
     }
-
+    
     public func setWriter(writer: Writer)
     {
         self.writer = writer
@@ -121,8 +128,11 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
             }
             
             // write the status line first
+            print("===============================")
+            print("Writing headers for connection: \(connection?.identifier)")
             if let writer = self.writer
             {
+                print("\(headers)")
                 writer.writeString("\(httpVersion) \(statusCode) \(reasonPhrase)\(CRLF)")
                 writer.writeString(headers.description)
                 writer.writeString(CRLF)

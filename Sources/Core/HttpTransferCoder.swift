@@ -16,6 +16,10 @@ public class HttpChunkedWriter : Writer {
     var currChunkWritten = 0
     var writer: Writer
     
+    public var stream : Stream {
+        return writer.stream
+    }
+    
     public init (writer: Writer)
     {
         self.writer = writer
@@ -27,7 +31,7 @@ public class HttpChunkedWriter : Writer {
      * <length in_hex>CRLF
      * <length bytes of data>CRLF
      */
-    public func write(buffer: ReadBufferType, length: Int, _ callback: IOCallback?) {
+    public func write(buffer: ReadBufferType, length: LengthType, _ callback: IOCallback?) {
         writer.writeString(String(format: "%2X", length) + CRLF)
         // write the payload
         writer.write(buffer, length: length, nil)
@@ -44,16 +48,18 @@ public class HttpChunkedReader : Reader {
     var readState = ReadState.ReadingLength
     var currChunkLength = 0
     var currChunkRead = 0
+    
+    public var stream : Stream {
+        return reader.stream
+    }
 
     public init (reader: StatefulReader)
     {
         self.reader = reader
     }
     
-    public var bytesAvailable : Int {
-        get {
-            return reader.bytesAvailable
-        }
+    public var bytesAvailable : LengthType {
+        return reader.bytesAvailable
     }
     
     public func read() -> (value: UInt8, error: ErrorType?) {
@@ -66,7 +72,7 @@ public class HttpChunkedReader : Reader {
      * <length in_hex>CRLF
      * <length bytes of data>CRLF
      */
-    public func read(buffer: ReadBufferType, length: Int, callback: IOCallback?)
+    public func read(buffer: ReadBufferType, length: LengthType, callback: IOCallback?)
     {
         if readState == ReadState.ReadingLength {
             reader.readTillChar(LF, callback: { (str, error) -> () in

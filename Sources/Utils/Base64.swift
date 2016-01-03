@@ -50,7 +50,7 @@ public class BaseXEncoding
     }
 
 //
-//    public static func Base64Encode(buffer: UnsafePointer<UInt8>, length: Int, output: UnsafeMutablePointer<UInt8>) -> UInt
+//    public static func Base64Encode(buffer: UnsafePointer<UInt8>, length: LengthType, output: UnsafeMutablePointer<UInt8>) -> UInt
 //    {
 //        var nDone = 0
 //        var mask = (1 << 6) - 1

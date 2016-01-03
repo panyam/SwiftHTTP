@@ -25,42 +25,49 @@ public protocol WSConnectionHandler
 
 public class WSConnection
 {
+    private struct WSReadRequest
+    {
+        var message : WSMessage
+        var buffer : ReadBufferType
+        var fully : Bool = false
+        var length : LengthType
+        var satisfied : LengthType = 0
+        var callback : IOCallback?
+        
+        var remaining : LengthType
+        {
+            return length - satisfied
+        }
+    }
+
     public typealias ClosedCallback = Void -> Void
     public typealias MessageCallback = (message: WSMessage) -> Void
 
-    private var reader: WSFrameReader
-    private var writer: Writer
-    /**
-     * Size of the buffer initially.
-     */
-    private var initialBufferSize = 8192
-    
-    /**
-     * Maximum size the buffer (of unconsumed data can grow upto) before
-     * the connection will be closed with a code 1009.  This is across
-     * all channels (and including control frames)
-     */
-    private var maxBufferSize = 1 << 20
-    private var frameWriteQueue = [WSMessageRequest]()
-    private var frameReadQueue = [WSMessageRequest]()
-    private var currentReadRequest : WSMessageRequest?
-    private var currentWriteRequest : WSMessageRequest?
+    private var frameReader: WSFrameReader
+    private var messageReader : WSMessageReader
+    private var writer: WSFrameWriter
+
     private var onMessageCallback : MessageCallback?
     private var onClosedCallback : ClosedCallback?
     
     public init(_ reader: Reader, writer: Writer)
     {
-        self.reader = WSFrameReader(reader)
-        self.writer = writer
+        self.frameReader = WSFrameReader(reader)
+        self.messageReader = WSMessageReader(frameReader)
+        self.writer = WSFrameWriter(writer)
         
         // So at this point we have a frame reader from which *something* can 
         // consume frames.  So messages (and channels) are a higher level 
         // abstraction on top of frames.  We have a message object from which
         // data can be read.   So how to tie these two together?
+        // There will be a single consumer to the frame reader as everything is
+        // a FIFO stream of frames.  The consumer to the frame reader will be
+        // a messager splitter or demultiplexer - it will take each frame and decide
+        // which channel the frame needs to go to (including control frames).
     }
-
+    
     /**
-     * Adds a message writer to the the queue of writes that 
+     * Adds a message writer to the the queue of writes that
      * will be handled along with all other writes.
      */
     public func sendMessage(opcode: UInt8, maskingKey: Int32?, source: Payload, callback: WSCallback)
@@ -85,12 +92,15 @@ public class WSConnection
         onClosedCallback = callback
         resumeReads()
     }
-    
+
     private func resumeReads()
     {
         // ensures that message reading is happening again
         // here is where frames are read and assembled into messages
         // also applying account all extension specific processing
-        
+    }
+    
+    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: IOCallback?)
+    {
     }
 }

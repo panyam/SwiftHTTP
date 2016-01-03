@@ -98,7 +98,21 @@ public class HeaderCollection : StringMultiMap, CustomStringConvertible
 
 public class HttpMessage {
     var headers = HeaderCollection(caseSensitiveKeys: false)
-    public init() {
+    
+    weak var parent : HttpConnection?
+    public var connection: HttpConnection? {
+        get {
+            return parent
+        }
+    }
+    
+    public init(_ connection: HttpConnection?) {
+        parent = connection
+    }
+    
+    public func reset()
+    {
+        headers.removeAll()
     }
     
     public var hostHeader : String? {

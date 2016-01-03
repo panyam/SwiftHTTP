@@ -9,6 +9,11 @@ public class HttpRequest : HttpMessage, CustomStringConvertible {
     var fragment : String = ""
     var queryParams = StringMultiMap(caseSensitiveKeys: true)
     var reader : BufferedReader?
+    
+    public override func reset()
+    {
+        super.reset()
+    }
 
     public var requestTarget : String {
         get {

@@ -14,7 +14,7 @@ extension String {
         let data = self.dataUsingEncoding(NSUTF8StringEncoding)!
         var digest = [UInt8](count:Int(CC_SHA1_DIGEST_LENGTH), repeatedValue: 0)
         CC_SHA1(data.bytes, CC_LONG(data.length), &digest)
-        return NSData(bytes: digest, length: 16)
+        return NSData(bytes: digest, length: Int(CC_SHA1_DIGEST_LENGTH))
     }
 
     func SHA1() -> String

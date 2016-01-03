@@ -20,6 +20,7 @@ public class HttpServer : StreamHandler, HttpConnectionDelegate
     var connections = [HttpConnection]()
     var requestHandler : HttpRequestHandler?
     var serverPort: UInt16 = 8888
+    var connectionCount : Int = 0
     
     public init(_ httpPort: UInt16)
     {
@@ -30,6 +31,8 @@ public class HttpServer : StreamHandler, HttpConnectionDelegate
         stream.consumer = StreamReader(stream)
         stream.producer = StreamWriter(stream)
         let httpconn = HttpConnection(reader: stream.consumer as! Reader, writer: stream.producer as! Writer)
+        connectionCount += 1
+        httpconn.identifier = String(format: "%03d", connectionCount)
         streams.append(stream)
         connections.append(httpconn)
         httpconn.requestHandler = requestHandler

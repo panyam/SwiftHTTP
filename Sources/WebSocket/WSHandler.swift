@@ -27,16 +27,19 @@ public class WSRequestServer : HttpRequestServer {
     public func handleRequest(request: HttpRequest, response: HttpResponse) {
         if let _ = validateRequest(request)
         {
+            let connection = request.connection!
             response.setStatus(HttpStatusCode.SwitchingProtocols)
             response.headers.setValueFor("Connection", value: "Upgrade")
             response.headers.setValueFor("Upgrade", value: "websocket")
             
-            let websocketAcceptString = request.headers.firstValueFor("Sec-WebSocket-Key")! + WS_HANDSHAKE_GUID
-            if let base64Encoded = BaseXEncoding.Base64Encode(websocketAcceptString.SHA1Bytes())
+            let websocketKey = request.headers.firstValueFor("Sec-WebSocket-Key")!
+            let websocketAcceptString = websocketKey + WS_HANDSHAKE_GUID
+            let sha1Bytes = websocketAcceptString.SHA1Bytes()
+            if let base64Encoded = BaseXEncoding.Base64Encode(sha1Bytes)
             {
                 response.headers.setValueFor("Sec-WebSocket-Accept", value: base64Encoded)
                 response.writeHeaders()
-                let connection = WSConnection(request.reader!, writer: response.writer!)
+                let connection = WSConnection(connection.reader, writer: connection.writer)
                 handler(connection: connection)
                 return
             }
