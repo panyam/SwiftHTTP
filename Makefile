@@ -3,7 +3,7 @@
 # Version/Product information
 #
 VERSION                 = 0.0.1
-PRODUCT_NAME            = swiftli
+PRODUCT_NAME            = SwiftHTTP
 
 # 
 # Build directory

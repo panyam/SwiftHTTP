@@ -9,12 +9,12 @@
   },
   "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "756B13CD-3E97-4C16-9F39-2DDE7B74259B",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
-    "C8C3584BAAEE677B0007020C560B6B04EB636DFC" : "swiftli\/",
+    "C8C3584BAAEE677B0007020C560B6B04EB636DFC" : "SwiftHTTP\/",
     "1546C33F76143E626ACB6B664C1A8B501AC5FBCC" : "SwiftIO\/"
   },
-  "DVTSourceControlWorkspaceBlueprintNameKey" : "swiftli",
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "SwiftHTTP",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,
-  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "osx\/swiftli.xcworkspace",
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "osx\/SwiftHTTP.xcworkspace",
   "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:panyam\/SwiftIO.git",
@@ -22,7 +22,7 @@
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "1546C33F76143E626ACB6B664C1A8B501AC5FBCC"
     },
     {
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:panyam\/swiftli.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:panyam\/SwiftHTTP.git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "C8C3584BAAEE677B0007020C560B6B04EB636DFC"
     }

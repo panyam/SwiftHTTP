@@ -5,6 +5,6 @@
       location = "group:../../SwiftIO/SwiftIO.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:swiftli.xcodeproj">
+      location = "group:SwiftHTTP.xcodeproj">
    </FileRef>
 </Workspace>

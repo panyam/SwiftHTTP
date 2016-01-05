@@ -65,13 +65,13 @@
 		F769F79C1C30E4E900A59A75 /* Base64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Base64.swift; path = Utils/Base64.swift; sourceTree = "<group>"; };
 		F769F79E1C30F21700A59A75 /* HttpStatusCode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpStatusCode.swift; path = ../Sources/Core/HttpStatusCode.swift; sourceTree = "<group>"; };
 		F769F7A01C30F75600A59A75 /* Crypto.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Crypto.swift; path = Utils/Crypto.swift; sourceTree = "<group>"; };
-		F769F7A21C30FA1700A59A75 /* Swiftli-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Swiftli-Bridging-Header.h"; sourceTree = SOURCE_ROOT; };
+		F769F7A21C30FA1700A59A75 /* SwiftHTTP-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwiftHTTP-Bridging-Header.h"; sourceTree = SOURCE_ROOT; };
 		F772FDD01C3606D40053646F /* WSConnection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSConnection.swift; sourceTree = "<group>"; };
 		F772FDD11C3606D40053646F /* WSFrame.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSFrame.swift; sourceTree = "<group>"; };
 		F772FDD21C3606D40053646F /* WSHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSHandler.swift; sourceTree = "<group>"; };
 		F772FDDA1C360DF00053646F /* Payload.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Payload.swift; path = ../Sources/Core/Payload.swift; sourceTree = "<group>"; };
-		F7B1D0C41C21024300DEBD83 /* SwiftIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftIO.framework; path = "../../../Library/Developer/Xcode/DerivedData/swiftli-agzelxuwcvqtmhgglneebflmmofu/Build/Products/Debug/SwiftIO.framework"; sourceTree = "<group>"; };
-		F7CF63921C1E715000493204 /* swiftli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = swiftli; sourceTree = BUILT_PRODUCTS_DIR; };
+		F7B1D0C41C21024300DEBD83 /* SwiftIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftIO.framework; path = "../../../Library/Developer/Xcode/DerivedData/SwiftHTTP-agzelxuwcvqtmhgglneebflmmofu/Build/Products/Debug/SwiftIO.framework"; sourceTree = "<group>"; };
+		F7CF63921C1E715000493204 /* SwiftHTTP */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SwiftHTTP; sourceTree = BUILT_PRODUCTS_DIR; };
 		F7F1303F1C2A1E8200CA528A /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -148,7 +148,7 @@
 		F7CF63931C1E715000493204 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F7CF63921C1E715000493204 /* swiftli */,
+				F7CF63921C1E715000493204 /* SwiftHTTP */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -160,7 +160,7 @@
 				F7CF64061C1E73BD00493204 /* Core */,
 				F769F78D1C30A30900A59A75 /* Handlers */,
 				F769F78A1C30A29200A59A75 /* Demos */,
-				F769F7A21C30FA1700A59A75 /* Swiftli-Bridging-Header.h */,
+				F769F7A21C30FA1700A59A75 /* SwiftHTTP-Bridging-Header.h */,
 				F772FDCF1C3606D40053646F /* WebSocket */,
 			);
 			name = Sources;
@@ -189,9 +189,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		F7CF63911C1E715000493204 /* swiftli */ = {
+		F7CF63911C1E715000493204 /* SwiftHTTP */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F7CF63991C1E715000493204 /* Build configuration list for PBXNativeTarget "swiftli" */;
+			buildConfigurationList = F7CF63991C1E715000493204 /* Build configuration list for PBXNativeTarget "SwiftHTTP" */;
 			buildPhases = (
 				F7CF638E1C1E715000493204 /* Sources */,
 				F7CF638F1C1E715000493204 /* Frameworks */,
@@ -201,9 +201,9 @@
 			);
 			dependencies = (
 			);
-			name = swiftli;
-			productName = swiftli;
-			productReference = F7CF63921C1E715000493204 /* swiftli */;
+			name = SwiftHTTP;
+			productName = SwiftHTTP;
+			productReference = F7CF63921C1E715000493204 /* SwiftHTTP */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -221,7 +221,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F7CF638D1C1E715000493204 /* Build configuration list for PBXProject "swiftli" */;
+			buildConfigurationList = F7CF638D1C1E715000493204 /* Build configuration list for PBXProject "SwiftHTTP" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -233,7 +233,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				F7CF63911C1E715000493204 /* swiftli */,
+				F7CF63911C1E715000493204 /* SwiftHTTP */,
 			);
 		};
 /* End PBXProject section */
@@ -359,7 +359,7 @@
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "Swiftli-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "SwiftHTTP-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -371,14 +371,14 @@
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "Swiftli-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "SwiftHTTP-Bridging-Header.h";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F7CF638D1C1E715000493204 /* Build configuration list for PBXProject "swiftli" */ = {
+		F7CF638D1C1E715000493204 /* Build configuration list for PBXProject "SwiftHTTP" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F7CF63971C1E715000493204 /* Debug */,
@@ -387,7 +387,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F7CF63991C1E715000493204 /* Build configuration list for PBXNativeTarget "swiftli" */ = {
+		F7CF63991C1E715000493204 /* Build configuration list for PBXNativeTarget "SwiftHTTP" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F7CF639A1C1E715000493204 /* Debug */,

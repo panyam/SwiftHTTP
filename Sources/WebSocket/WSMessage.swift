@@ -1,6 +1,6 @@
 //
 //  WSMessage.swift
-//  swiftli
+//  SwiftHTTP
 //
 //  Created by Sriram Panyam on 1/1/16.
 //  Copyright © 2016 Sriram Panyam. All rights reserved.
