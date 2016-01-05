@@ -45,17 +45,30 @@ public class WSConnection
 
     private var frameReader: WSFrameReader
     private var messageReader : WSMessageReader
-    private var writer: WSFrameWriter
+    private var frameWriter: WSFrameWriter
+    private var messageWriter : WSMessageWriter
 
-    private var onMessageCallback : MessageCallback?
-    private var onClosedCallback : ClosedCallback?
+    public var onMessage : MessageCallback?
+    public var onClosed : ClosedCallback?
     
     public init(_ reader: Reader, writer: Writer)
     {
         self.frameReader = WSFrameReader(reader)
         self.messageReader = WSMessageReader(frameReader)
-        self.writer = WSFrameWriter(writer)
-        
+        self.frameWriter = WSFrameWriter(writer)
+        self.messageWriter = WSMessageWriter(frameWriter)
+
+        messageReader.onClosed = {
+            self.onClosed?()
+        }
+        messageReader.onMessage = {(message) in
+            self.onMessage?(message: message)
+        }
+        messageWriter.onClosed = {
+            self.onClosed?()
+        }
+
+        start()
         // So at this point we have a frame reader from which *something* can 
         // consume frames.  So messages (and channels) are a higher level 
         // abstraction on top of frames.  We have a message object from which
@@ -66,41 +79,22 @@ public class WSConnection
         // which channel the frame needs to go to (including control frames).
     }
     
+    public func start()
+    {
+        self.messageReader.start()
+    }
+    
     /**
      * Adds a message writer to the the queue of writes that
      * will be handled along with all other writes.
      */
-    public func sendMessage(opcode: UInt8, maskingKey: Int32?, source: Payload, callback: WSCallback)
+    public func write(opcode: WSFrame.Opcode, maskingKey: UInt32, source: Payload, callback: CompletionCallback?)
     {
-    }
-    
-    /**
-     * Gets the next message in the stream.
-     * Returns a WSMessageReader via the callback which can be used
-     * to read upto totalLength number of bytes in total.
-     * This is following a model of only doing the reading if someone is
-     * actually doing the consuming (tree falling in a forest and all that)
-     */
-    public func onMessage(callback: MessageCallback)
-    {
-        onMessageCallback = callback
-        resumeReads()
-    }
-    
-    public func onClosed(callback : ClosedCallback)
-    {
-        onClosedCallback = callback
-        resumeReads()
-    }
-
-    private func resumeReads()
-    {
-        // ensures that message reading is happening again
-        // here is where frames are read and assembled into messages
-        // also applying account all extension specific processing
+        self.messageWriter.write(opcode, maskingKey: maskingKey, source: source, callback: callback)
     }
     
     public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: IOCallback?)
     {
+        self.messageReader.read(message, buffer: buffer, length: length, callback: callback)
     }
 }

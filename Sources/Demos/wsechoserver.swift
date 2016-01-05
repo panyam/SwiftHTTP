@@ -21,15 +21,15 @@ public extension WSMessage
 
 public class WSEchoHandler : WSConnectionHandler
 {
-    var reader : StatefulReader?
+    var reader : DataReader?
     var connection : WSConnection?
     
     // Handles a new connection
     public func handle(connection: WSConnection)
     {
         self.connection = connection
-        connection.onMessage(self.processMessage)
-        connection.onClosed(self.connectionClosed)
+        connection.onMessage = self.processMessage
+        connection.onClosed = self.connectionClosed
     }
     
     private func connectionClosed()
@@ -44,7 +44,7 @@ public class WSEchoHandler : WSConnectionHandler
         let buffer = message.readBuffer
 
         connection?.read(message, buffer: buffer, length: MESSAGE_READ_SIZE) {(length: LengthType, error: ErrorType?) in
-            let endReached = IOErrorType.EndReached.equals(error)
+            let endReached = (error as? IOErrorType) == IOErrorType.EndReached
             if error == nil || endReached
             {
                 // process the data received so far by just echoing it out
@@ -54,7 +54,7 @@ public class WSEchoHandler : WSConnectionHandler
                 }
 
                 let source = BufferPayload(buffer: buffer, length: length)
-                self.connection?.sendMessage(message.messageType, maskingKey: 0, source: source, callback: { (message) in
+                self.connection?.write(message.messageType, maskingKey: 0, source: source, callback: { (error) in
                     if !endReached {
                         // process message by doing more reads on the message
                         // or call message.discard() to discard the rest of the

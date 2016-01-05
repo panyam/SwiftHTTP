@@ -89,7 +89,7 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
         }
         else if let writer = self.writer
         {
-            self.body?.write(writer) { (error) -> () in
+            self.body?.write(writer, length: 0) { (error) -> () in
                 // TODO: Have a CappedWriter in place to ensure no more than totalLength number of bytes have been written.
                 // TODO: Ensure chunked encoding
                 // TODO: Do framing of data if required

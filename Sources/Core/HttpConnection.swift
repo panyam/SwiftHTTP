@@ -21,7 +21,8 @@ public class HttpConnection : HttpResponseDelegate
     
     var delegate : HttpConnectionDelegate?
     private var theWriter : Writer
-    private var theReader : StatefulReader
+    private var theReader : BufferedReader
+    private var consumer : DataReader
     public var requestHandler : HttpRequestHandler?
     private var currentRequest = HttpRequest(nil)
     private var currentResponse = HttpResponse(nil)
@@ -32,7 +33,8 @@ public class HttpConnection : HttpResponseDelegate
     public init(reader: Reader, writer: Writer)
     {
         self.theWriter = writer
-        self.theReader = StatefulReader(BufferedReader(reader))
+        self.theReader = BufferedReader(reader)
+        self.consumer = DataReader(theReader)
     }
 
     /**
@@ -59,7 +61,7 @@ public class HttpConnection : HttpResponseDelegate
 
     private func parseStartLineAndHeaders(callback: (error : ErrorType?) -> ())
     {
-        theReader.readTillChar(LF) { (str, error) -> () in
+        consumer.readTillChar(LF) { (str, error) -> () in
             if error != nil {
                 return callback(error: error)
             }
@@ -88,7 +90,7 @@ public class HttpConnection : HttpResponseDelegate
     
     private func processHeaders(callback: (error: ErrorType?) -> ())
     {
-        theReader.readTillChar(LF) { (str, error) -> () in
+        consumer.readTillChar(LF) { (str, error) -> () in
             if error != nil {
                 callback(error: error)
                 return

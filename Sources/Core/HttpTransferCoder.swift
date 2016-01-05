@@ -24,6 +24,14 @@ public class HttpChunkedWriter : Writer {
     {
         self.writer = writer
     }
+
+    public func flush(callback: CompletionCallback?) {
+        self.writer.flush(callback)
+    }
+
+    public func write(value: UInt8, _ callback: CompletionCallback?) {
+        assert(false, "Not implemented")
+    }
     
     /**
      * Write from the reader where the data has been chunk encoded as:
@@ -44,7 +52,8 @@ public class HttpChunkedReader : Reader {
         case ReadingLength
         case ReadingChunk
     }
-    var reader: StatefulReader
+    var reader: Reader
+    var consumer : DataReader
     var readState = ReadState.ReadingLength
     var currChunkLength = 0
     var currChunkRead = 0
@@ -53,13 +62,14 @@ public class HttpChunkedReader : Reader {
         return reader.stream
     }
 
-    public init (reader: StatefulReader)
+    public init (reader: Reader)
     {
         self.reader = reader
+        self.consumer = DataReader(reader)
     }
-    
-    public var bytesAvailable : LengthType {
-        return reader.bytesAvailable
+
+    public var bytesReadable : LengthType {
+        return reader.bytesReadable
     }
     
     public func read() -> (value: UInt8, error: ErrorType?) {
@@ -75,7 +85,7 @@ public class HttpChunkedReader : Reader {
     public func read(buffer: ReadBufferType, length: LengthType, callback: IOCallback?)
     {
         if readState == ReadState.ReadingLength {
-            reader.readTillChar(LF, callback: { (str, error) -> () in
+            consumer.readTillChar(LF, callback: { (str, error) -> () in
                 // we have the length now
                 let lengthString = str.substringToIndex(str.endIndex.predecessor())  // remove the \r
                 self.currChunkLength = Int(strtoul(lengthString, nil, 16))
@@ -87,12 +97,12 @@ public class HttpChunkedReader : Reader {
         } else {
             // read the actual data chunk now
             let numToRead = min(length, currChunkLength) - currChunkRead
-            reader.read(buffer.advancedBy(currChunkRead), length: numToRead, callback: { (length, error) -> () in
+            consumer.read(buffer.advancedBy(currChunkRead), length: numToRead, callback: { (length, error) -> () in
                 self.currChunkRead += length
                 if self.currChunkRead >= self.currChunkLength {
                     // chunk read so reset state
                     self.readState = ReadState.ReadingLength
-                    self.reader.readTillChar(LF, callback: nil)
+                    self.consumer.readTillChar(LF, callback: nil)
                 }
                 callback?(length: self.currChunkRead, error: error)
             })

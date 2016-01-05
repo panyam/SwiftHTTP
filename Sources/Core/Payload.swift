@@ -20,18 +20,24 @@ public protocol Payload
      * The opcodes and masking keys are already provided during the call to
      * connection.sendMessage
      */
-    var totalLength : UInt? { get }
+    var totalLength : LengthType? { get }
     
     /**
-     * If the message length above is not given then frames can be specified
-     * by the message source explicitly to indicate framing per message.
+     * If the message length above is not given then this method can be called to 
+     * begin the "next" frame of the message which *must* have a length.
+     * If this method returns 0 then there are no more frames available.
      */
-    var frameLength : UInt? { get }
+    func nextFrame() -> LengthType?
 
     /**
-     * Called to write the next set of bytes to the underlying channel.
+     * Called to write the next length set of bytes to the underlying channel.
+     * If the source tries to write more than length number of bytes the underlying
+     * writer may throw an EndReached error.  It can however write less than length
+     * number of bytes (eg if it applies compression).
+     *
+     * A length of 0 indicates to the payload source that it can write as many bytes as it has.
      */
-    func write(writer: Writer, completion: PayloadWriteCallback)
+    func write(writer: Writer, length: LengthType, completion: PayloadWriteCallback)
 }
 
 /**
@@ -46,20 +52,23 @@ public class StringPayload : Payload
         value = stringValue
     }
     
-    public var totalLength : UInt? {
+    public var totalLength : LengthType? {
         get {
-            return UInt(value.lengthOfBytesUsingEncoding(NSUTF8StringEncoding))
+            return LengthType(value.lengthOfBytesUsingEncoding(NSUTF8StringEncoding))
         }
     }
 
-    public var frameLength : UInt?
-    {
-        get {
-            return nil
-        }
+    public func nextFrame() -> LengthType? {
+        return nil
     }
-    
-    public func write(writer: Writer, completion: PayloadWriteCallback)
+
+    /**
+     * Called to write the next length set of bytes to the underlying channel.
+     * If the source tries to write more than length number of bytes the underlying
+     * writer may throw an EndReached error.  It can however write less than length
+     * number of bytes (eg if it applies compression).
+     */
+    public func write(writer: Writer, length: LengthType, completion: PayloadWriteCallback)
     {
         writer.writeString(value) { (length, error) -> () in
             completion(error: error)
@@ -70,42 +79,36 @@ public class StringPayload : Payload
 public class BufferPayload : Payload
 {
     var buffer : ReadBufferType
-    var length : UInt
-    
-    convenience public init(buffer : ReadBufferType, length: LengthType)
-    {
-        self.init(buffer: buffer, length: UInt(length))
-    }
+    var offset : OffsetType = 0
+    var length : LengthType
 
-    public init(buffer : ReadBufferType, length: UInt)
+    public init(buffer : ReadBufferType, length: LengthType)
     {
         self.buffer = buffer
         self.length = length
     }
     
-    public var totalLength : UInt? {
-        get {
-            return length
-        }
+    public var totalLength : LengthType? {
+        return length
     }
     
     /**
      * If the message length above is not given then frames can be specified
      * by the message source explicitly to indicate framing per message.
      */
-    public var frameLength : UInt?
-    {
-        get {
-            return nil
-        }
+    public func nextFrame() -> LengthType? {
+        return nil
     }
-
+    
     /**
-     * Called to write the next set of bytes to the underlying channel.
+     * Called to write the next length set of bytes to the underlying channel.
+     * If the source tries to write more than length number of bytes the underlying
+     * writer may throw an EndReached error.  It can however write less than length
+     * number of bytes (eg if it applies compression).
      */
-    public func write(writer: Writer, completion: PayloadWriteCallback)
+    public func write(writer: Writer, length: LengthType, completion: PayloadWriteCallback)
     {
-        writer.write(buffer, length: LengthType(self.length)) { (length, error) -> () in
+        writer.write(buffer, length: LengthType(length)) { (length, error) -> () in
             completion(error: error)
         }
     }
@@ -114,7 +117,8 @@ public class BufferPayload : Payload
 public class FilePayload : Payload
 {
     var filePath : String
-    var fileSize : UInt?
+    var offset : OffsetType = 0
+    var fileSize : LengthType?
     var dataBuffer = ReadBufferType.alloc(DEFAULT_BUFFER_LENGTH)
     
     var reader : StreamReader
@@ -127,31 +131,32 @@ public class FilePayload : Payload
         reader = FileReader(filePath)
     }
     
-    public var totalLength : UInt?
+    public var totalLength : LengthType?
     {
-        get
-        {
-            return fileSize
-        }
+        return fileSize
     }
     
-    public var frameLength : UInt?
-    {
-        get {
-            return nil
-        }
+    public func nextFrame() -> LengthType? {
+        return nil
     }
     
-    public func write(writer: Writer, completion: PayloadWriteCallback)
+    /**
+     * Called to write the next length set of bytes to the underlying channel.
+     * If the source tries to write more than length number of bytes the underlying
+     * writer may throw an EndReached error.  It can however write less than length
+     * number of bytes (eg if it applies compression).
+     */
+    public func write(writer: Writer, length: LengthType, completion: PayloadWriteCallback)
     {
         var totalWritten = 0
+        assert(false, "Come back to this")
         func readSender()
         {
-            reader.read(dataBuffer, length: DEFAULT_BUFFER_LENGTH) { (length, error) -> () in
+            reader.read(dataBuffer, length: DEFAULT_BUFFER_LENGTH) { (length, error) in
                 if error != nil || length == 0 {
                     completion(error: error)
                 } else {
-                    writer.write(self.dataBuffer, length: length) { (length, error) -> () in
+                    writer.write(self.dataBuffer, length: length) { (length, error) in
                         if error != nil {
                             completion(error: error)
                         } else {

@@ -18,11 +18,25 @@ public struct WSFrame
         case ContinuationFrame = 0
         case TextFrame = 1
         case BinaryFrame = 2
+        case ReservedNonControl3 = 3
+        case ReservedNonControl4 = 4
+        case ReservedNonControl5 = 5
+        case ReservedNonControl6 = 6
+        case ReservedNonControl7 = 7
         case CloseFrame = 8
         case PingFrame = 9
         case PongFrame = 10
+        case ReservedControl11 = 11
+        case ReservedControl12 = 12
+        case ReservedControl13 = 13
+        case ReservedControl14 = 14
+        case ReservedControl15 = 15
+        
+        public var isControlCode : Bool {
+            return self.rawValue >= CloseFrame.rawValue
+        }
     }
-    
+
     /**
      * Which channel a frame belongs to.
      * In a multiplexed connection a single connection can be used to
@@ -39,40 +53,30 @@ public struct WSFrame
     public var maskingKey : UInt32 = 0
     
     public var isControlFrame : Bool {
-        get {
-            return opcode == .CloseFrame || opcode == .PingFrame || opcode == .PongFrame
-        }
+        return opcode == .CloseFrame || opcode == .PingFrame || opcode == .PongFrame
+    }
+    
+    public var isStartFrame : Bool {
+        return opcode != .ContinuationFrame
     }
 }
 
-/**
- * The frame reader is the low level reader of all frames and returns raw data
- * from the frames (after unmasking and after stripping out the headers).
- *
- * The way a client would use this is by starting a frame with startFrame
- * and then repeatedly calling read until it returns an EndReached error.
- *
- * If startFrame returns an error then no more frames are available.
- */
-public class WSFrameReader : Reader
+public class WSFrameProcessor
 {
-    public typealias FrameStartCallback = (frame: WSFrame?, error : ErrorType?) -> Void
-    public typealias FrameReadCallback = IOCallback
-    private enum ReadState
+    enum State
     {
         case UNSTARTED
-        case READING_HEADER
-        case READING_PAYLOAD
+        case HEADER
+        case PAYLOAD
     }
-    private var readState : ReadState = ReadState.READING_HEADER
-    private var reader : StatefulReader
-    private var currFrameChannelId = WSFrame.DEFAULT_CHANNEL_ID
-    private var currFrameLength : LengthType = 0
-    private var currFrameSatisfied : LengthType = 0
-    private var currFrameOpcode = WSFrame.Opcode.ContinuationFrame
-    private var currFrameIsMasked : Bool = false
-    private var currFrameIsFinal : Bool = false
-    private var currFrameMaskingKey : UInt32 = 0
+    var state : State = State.UNSTARTED
+    var currFrameChannelId = WSFrame.DEFAULT_CHANNEL_ID
+    var currFrameLength : LengthType = 0
+    var currFrameSatisfied : LengthType = 0
+    var currFrameOpcode = WSFrame.Opcode.ContinuationFrame
+    var currFrameIsMasked : Bool = false
+    var currFrameIsFinal : Bool = false
+    var currFrameMaskingKey : UInt32 = 0
     
     /**
      * The current frame being read
@@ -89,25 +93,79 @@ public class WSFrameReader : Reader
         }
     }
     
+    public var isIdle : Bool {
+        if state == .UNSTARTED
+        {
+            return true
+        }
+        if currFrameSatisfied >= currFrameLength
+        {
+            if currFrameSatisfied != 0
+            {
+                reset()
+            }
+            return true
+        }
+        return  false
+    }
+    
+    public var processingHeader : Bool {
+        return state == .HEADER
+    }
+    
+    public var processingPayload : Bool {
+        if state != .PAYLOAD
+        {
+            return false
+        }
+        
+        if currFrameSatisfied < currFrameLength
+        {
+            return true
+        }
+        if currFrameSatisfied > 0
+        {
+            reset()
+        }
+        return false
+    }
+    
+    private func reset()
+    {
+        state = .UNSTARTED
+        currFrameSatisfied = 0
+        currFrameLength = 0
+        currFrameOpcode = WSFrame.Opcode.ContinuationFrame
+        currFrameIsMasked = false
+        currFrameMaskingKey = 0
+        currFrameIsFinal = true
+    }
+}
+
+/**
+ * The frame reader is the low level reader of all frames and returns raw data
+ * from the frames (after unmasking and after stripping out the headers).
+ *
+ * The way a client would use this is by starting a frame with startFrame
+ * and then repeatedly calling read until it returns an EndReached error.
+ *
+ * If startFrame returns an error then no more frames are available.
+ */
+public class WSFrameReader : WSFrameProcessor, Reader
+{
+    public typealias FrameStartCallback = (frame: WSFrame?, error : ErrorType?) -> Void
+    public typealias FrameReadCallback = IOCallback
+    private var reader : Reader
+    private var consumer : DataReader
+    
     public var stream : Stream {
         return reader.stream
     }
     
     public init(_ reader : Reader)
     {
-        self.reader = StatefulReader(reader)
-    }
-    
-    public var isIdle : Bool {
-        return readState == .UNSTARTED || currFrameSatisfied >= currFrameLength
-    }
-    
-    public var readingHeader : Bool {
-        return readState == .READING_HEADER
-    }
-    
-    public var readingPayload : Bool {
-        return readState == .READING_PAYLOAD && currFrameSatisfied < currFrameLength
+        self.reader = reader
+        self.consumer = DataReader(reader)
     }
 
     /**
@@ -116,7 +174,7 @@ public class WSFrameReader : Reader
      */
     public func start(callback : FrameStartCallback)
     {
-        if readState != ReadState.UNSTARTED
+        if !isIdle
         {
             return callback(frame: nil, error: nil)
         }
@@ -125,47 +183,47 @@ public class WSFrameReader : Reader
         
         func readMaskingKeyAndContinue(callback : FrameStartCallback)
         {
-            if !self.currFrameIsMasked
+            if !currFrameIsMasked
             {
-                self.currFrameMaskingKey = 0
-                self.readState = ReadState.READING_PAYLOAD
+                currFrameMaskingKey = 0
+                state = State.PAYLOAD
                 return callback(frame: self.currentFrame, error: nil)
             }
             
-            self.reader.readUInt32 { (value, error) in
+            self.consumer.readUInt32 { (value, error) in
                 self.currFrameMaskingKey = value
-                self.readState = ReadState.READING_PAYLOAD
+                self.state = .PAYLOAD
                 callback(frame: self.currentFrame, error: nil)
             }
         }
 
         // read type and first length bit
-        reader.consume({ (reader) -> (finished: Bool, error: ErrorType?) in
-            self.reader.readInt16 { (value, error) in
-                self.currFrameLength = LengthType(value & Int16((1 << 7) - 1))
-                value >> 7
+        consumer.consume({ (reader) -> (finished: Bool, error: ErrorType?) in
+            self.consumer.readUInt16 { (var value, error) in
+                self.currFrameLength = LengthType(value & UInt16((1 << 7) - 1))
+                value = value >> 7
                 
-                self.currFrameIsMasked = ((value & Int16(1)) == 1)
-                value >> 1
+                self.currFrameIsMasked = ((value & UInt16(1)) == 1)
+                value = value >> 1
                 
                 // TODO: validate opcode types
-                self.currFrameOpcode = WSFrame.Opcode(rawValue: UInt8(value & Int16((1 << 4) - 1)))!
-                value >> 7
+                self.currFrameOpcode = WSFrame.Opcode(rawValue: UInt8(value & 0x0f))!
+                value = value >> 7
 
-                self.currFrameIsFinal = ((value & Int16(1)) == 1)
-                value >> 1
+                self.currFrameIsFinal = ((value & UInt16(1)) == 1)
+                value = value >> 1
                 
                 if self.currFrameLength == 126
                 {
                     // 2 byte payload length
-                    self.reader.readUInt16({ (value, error) in
+                    self.consumer.readUInt16({ (value, error) in
                         self.currFrameLength = LengthType(value)
                         readMaskingKeyAndContinue(callback)
                     })
                 } else if self.currFrameLength == 127
                 {
                     // 8 byte payload length
-                    self.reader.readUInt64({ (value, error) in
+                    self.consumer.readUInt64({ (value, error) in
                         self.currFrameLength = LengthType(value)
                         readMaskingKeyAndContinue(callback)
                     })
@@ -179,24 +237,33 @@ public class WSFrameReader : Reader
         })
     }
     
-    public var bytesAvailable : LengthType {
-        if self.readState != ReadState.READING_PAYLOAD || currFrameSatisfied >= currFrameLength
+    public var bytesReadable : LengthType {
+        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
         {
             reset()
             return 0
         } else {
-            return reader.bytesAvailable
+            return reader.bytesReadable
         }
     }
     
     public func read() -> (value: UInt8, error: ErrorType?) {
-        if self.readState != ReadState.READING_PAYLOAD || currFrameSatisfied >= currFrameLength
+        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
         {
             reset()
             return (0, IOErrorType.Unavailable)
         } else {
-            // TODO: unmask the data
-            return reader.read()
+            var (out, error) = reader.read()
+            if error == nil
+            {
+                if currFrameMaskingKey != 0
+                {
+                    let mask = (currFrameMaskingKey >> UInt32(1 << (8 * (currFrameSatisfied % 4)))) & 0xff
+                    out ^= UInt8(mask)
+                }
+                currFrameSatisfied++
+            }
+            return (out, error)
         }
     }
 
@@ -205,7 +272,7 @@ public class WSFrameReader : Reader
      */
     public func read(buffer : ReadBufferType, length: LengthType, callback : FrameReadCallback?)
     {
-        if self.readState != ReadState.READING_PAYLOAD || currFrameSatisfied >= currFrameLength
+        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
         {
             reset()
             callback?(length: 0, error: IOErrorType.EndReached)
@@ -215,7 +282,7 @@ public class WSFrameReader : Reader
         let realLength = min(length, currFrameLength - currFrameSatisfied)
         reader.read(buffer, length: realLength) { (length, error) in
             assert(length <= realLength, "Underlying reader may be broken - gave us too many bytes")
-            let endReached = IOErrorType.EndReached.equals(error)
+            let endReached = (error as? IOErrorType) == IOErrorType.EndReached
             var finalError = error
             if error == nil || endReached
             {
@@ -229,25 +296,173 @@ public class WSFrameReader : Reader
             callback?(length: length, error: finalError)
         }
     }
-    
-    private func reset()
-    {
-        readState = ReadState.UNSTARTED
-        currFrameSatisfied = 0
-        currFrameLength = 0
-        currFrameOpcode = WSFrame.Opcode.ContinuationFrame
-        currFrameIsMasked = false
-        currFrameMaskingKey = 0
-        currFrameIsFinal = true
-    }
 }
 
-public class WSFrameWriter
+/**
+ * The frame reader is the low level writer of all frames .
+ *
+ * The way a client would use this is by starting a frame with startFrame
+ * and then repeatedly calling read until it returns an EndReached error.
+ *
+ * If startFrame returns an error then no more frames are available.
+ */
+public class WSFrameWriter : WSFrameProcessor, Writer
 {
+    public typealias FrameStartCallback = (frame: WSFrame?, error : ErrorType?) -> Void
+    public typealias FrameWriteCallback = IOCallback
     private var writer : Writer
+    private var producer : DataWriter
+
+    public var stream : Stream {
+        return writer.stream
+    }
+    
     public init(_ writer : Writer)
     {
         self.writer = writer
+        self.producer = DataWriter(writer)
+    }
+    
+    /**
+     * Called to start a new frame.  If this is called when a frame has already been
+     * started, then nothing happens.
+     */
+    public func start(var opcode: WSFrame.Opcode, frameLength: LengthType, isFinal: Bool, maskingKey: UInt32, callback : FrameStartCallback)
+    {
+        if !isIdle
+        {
+            return callback(frame: nil, error: nil)
+        }
+        
+        reset()
+        state = .UNSTARTED
+        currFrameSatisfied = 0
+        currFrameLength = frameLength
+        currFrameOpcode = opcode
+        currFrameIsMasked = maskingKey != 0
+        currFrameMaskingKey = maskingKey
+        currFrameIsFinal = isFinal
+
+        var numLengthBytes = 0
+        
+        // TODO: Handle RSVD 1/2/3 and 3 based on extensions
+        var opcodeAndLength1 : LengthType = LengthType((isFinal ? 0xf0 : 0x00) | (opcode.rawValue)) << 8
+        if frameLength <= 125
+        {
+            opcodeAndLength1 |= (frameLength & 0xff)
+        } else if frameLength <= (1 << 16)
+        {
+            opcodeAndLength1 |= (126 & 0xff)
+        } else // 64 bits
+        {
+            opcodeAndLength1 |= (127 & 0xff)
+        }
+
+        producer.writeUInt16(UInt16(opcodeAndLength1)) { (error) -> Void in
+            if error != nil
+            {
+                return callback(frame: self.currentFrame, error: error)
+            }
+
+            func writeMaskingKeyAndContinue(completion : FrameStartCallback)
+            {
+                if !self.currFrameIsMasked
+                {
+                    self.state = .PAYLOAD
+                    return completion(frame: self.currentFrame, error: nil)
+                }
+                
+                self.producer.writeUInt32(self.currFrameMaskingKey) { (error) in
+                    self.state = .PAYLOAD
+                    completion(frame: self.currentFrame, error: nil)
+                }
+            }
+
+            if frameLength <= 125
+            {
+                // go to masking key
+                writeMaskingKeyAndContinue(callback)
+            } else if frameLength <= (1 << 16)  // 32 bit length
+            {
+                self.producer.writeUInt32(UInt32(frameLength & 0xffff), callback: { (error) -> Void in
+                    writeMaskingKeyAndContinue(callback)
+                })
+            } else // 64 bits
+            {
+                self.producer.writeUInt64(UInt64(frameLength), callback: { (error) -> Void in
+                    writeMaskingKeyAndContinue(callback)
+                })
+            }
+        }
+    }
+
+    public func flush(callback: CompletionCallback?) {
+        self.writer.flush(callback)
+    }
+    
+    public func write(var value: UInt8, _ callback: CompletionCallback?) {
+        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
+        {
+            reset()
+            callback?(error: IOErrorType.Unavailable)
+        } else {
+            if currFrameMaskingKey != 0
+            {
+                let mask = (currFrameMaskingKey >> UInt32(1 << (8 * (currFrameSatisfied % 4)))) & 0xff
+                value ^= UInt8(mask)
+            }
+            currFrameSatisfied++
+            return writer.write(value, callback)
+        }
+    }
+    
+    public func write(buffer: WriteBufferType, length: LengthType, _ callback: IOCallback?) {
+        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
+        {
+            reset()
+            callback?(length: 0, error: IOErrorType.EndReached)
+            return
+        }
+        
+        let realLength = min(length, currFrameLength - currFrameSatisfied)
+        var index = currFrameSatisfied % 4
+        if currFrameIsMasked && currFrameMaskingKey != 0
+        {
+            // mask the data
+            let mask = (currFrameMaskingKey >> UInt32(1 << (8 * index))) & 0xff
+            for i in 0 ..< realLength
+            {
+                buffer[i] = buffer[i] ^ UInt8(mask)
+            }
+            index = (index + 1) % 4
+        }
+
+        writeRaw(buffer, length: length, callback)
+    }
+    
+    /**
+     * Called to write the bound-checked and masked data continuosly till
+     * all requested data has been written (or errored out)
+     */
+    private func writeRaw(buffer: WriteBufferType, length: LengthType, _ callback: IOCallback?)
+    {
+        let requestedLength = length
+        writer.write(buffer, length: length) { (length, error) -> Void in
+            assert(length <= requestedLength, "Underlying reader may be broken - gave us too many bytes")
+            let endReached = (error as? IOErrorType) == IOErrorType.EndReached
+            var finalError = error
+            if error == nil || endReached
+            {
+                self.currFrameSatisfied += LengthType(length)
+                if self.currFrameSatisfied >= self.currFrameLength
+                {
+                    finalError = IOErrorType.EndReached
+                } else {
+                    // more data left so call write again
+                    return self.writeRaw(buffer.advancedBy(length), length: requestedLength - length, callback)
+                }
+            }
+            callback?(length: length, error: finalError)
+        }
     }
 }
-
