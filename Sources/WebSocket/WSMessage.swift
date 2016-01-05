@@ -361,46 +361,52 @@ public class WSMessageWriter
      */
     private func continueWriting()
     {
+        // only start a request if the writer is idle
+        // (if it is already writing a frame then dont bother it)
         if writer.isIdle
         {
             if let nextWriteRequest = self.controlWriteQueue.first
             {
-                return sendNextFrame(nextWriteRequest)
+                sendNextFrame(nextWriteRequest)
             } else if let nextWriteRequest = self.writeQueue.first
             {
-                return sendNextFrame(nextWriteRequest)
+                sendNextFrame(nextWriteRequest)
+            } else {
+                // no requests left AND the writer is idle so try again later on
+                // TODO: Get the right runloop
+                print("Write queue empty.  Dispatching again later on")
+                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(0.05) {
+                    self.continueWriting()
+                }
             }
-        }
-
-        // no requests left AND the writer is idle so try again later on
-        // TODO: Get the right runloop
-        print("Write queue empty.  Dispatching again later on")
-        CoreFoundationRunLoop.currentRunLoop().enqueueAfter(0.05) {
-            self.continueWriting()
         }
     }
     
-    private func startNextFrame()
+    private func sendNextFrame(writeRequest : WSWriteRequest)
     {
-//        // kick off the reading of the first frame
-//        self.writer.start(opcode, frameLength: frameLength, isFinal: isFinal, maskingKey: maskingKey) { (frame, error) -> Void in
-//            if error == nil && frame != nil {
-//                self.currentFrame = frame!
-//                self.controlFrameRequest.satisfied = 0
-//                self.controlFrameRequest.length = self.currentFrame.payloadLength
-//                if self.controlFrameRequest.remaining == 0
-//                {
-//                    // we have the frame so process it and start the next frame
-//                    self.processCurrentFrame {
-//                        self.startNextFrame()
-//                    }
-//                } else {
-//                    self.continueReading()
-//                }
-//            } else {
-//                self.onClosed?()
-//            }
-//        }
+        writeRequest.writeNextFrame(writer, maxFrameSize: maxFrameSize) { (hasMore, error) -> Void in
+            if error != nil
+            {
+                self.unwindWithError(error!)
+            }
+            else
+            {
+                if !hasMore
+                {
+                    // remove the request from the queue as it is done
+                    if writeRequest.opcode.isControlCode
+                    {
+                        assert(self.controlWriteQueue.first === writeRequest)
+                        self.controlWriteQueue.removeFirst()
+                    } else
+                    {
+                        assert(self.writeQueue.first === writeRequest)
+                        self.writeQueue.removeFirst()
+                    }
+                }
+                self.continueWriting()
+            }
+        }
     }
     
     /**
@@ -413,46 +419,6 @@ public class WSMessageWriter
         {
             self.writeQueue.removeFirst()
             next.callback?(error: error)
-        }
-    }
-    
-    
-    private func sendNextFrame(writeRequest : WSWriteRequest)
-    {
-        // writer is idle so start the frame
-        if writeRequest.numFramesWritten == 0
-        {
-            // first time we are dealing with this frame so do a bit of book keeping
-            if let totalLength = writeRequest.source.totalLength
-            {
-                writeRequest.hasTotalLength = true
-                writeRequest.currentLength = LengthType(totalLength)
-            } else if let currFrameLength = writeRequest.source.nextFrame()
-            {
-                writeRequest.hasTotalLength = false
-                writeRequest.currentLength = LengthType(currFrameLength)
-            } else {
-                // this request is finished so call the callback and be done with it
-                writeRequest.callback?(error: nil)
-                // TODO: dispatch in next runloop?
-                self.continueWriting()
-                return
-            }
-        }
-        let length = min(writeRequest.remaining, maxFrameSize)
-        let isFinalFrame = writeRequest.remaining <= maxFrameSize
-        writer.start(writeRequest.opcode, frameLength: length, isFinal: isFinalFrame, maskingKey: writeRequest.maskingKey) { (frame, error) -> Void in
-            writeRequest.source.write(self.writer, length: length, completion: { (error) -> Void in
-                if error != nil
-                {
-                } else {
-                    writeRequest.satisfied += length
-                    if writeRequest.remaining == 0
-                    {
-                        
-                    }
-                }
-            })
         }
     }
 
@@ -484,6 +450,65 @@ public class WSMessageWriter
         
         var remaining : LengthType {
             return currentLength > satisfied ? currentLength - satisfied : 0
+        }
+        
+        func calculateLengths() -> Bool
+        {
+            if let totalLength = source.totalLength
+            {
+                hasTotalLength = true
+                currentLength = LengthType(totalLength)
+            } else if let currFrameLength = source.nextFrame()
+            {
+                hasTotalLength = false
+                currentLength = LengthType(currFrameLength)
+            } else {
+                return false
+            }
+            return true
+        }
+        
+        func writeNextFrame(writer: WSFrameWriter, maxFrameSize: Int, frameCallback : (hasMore : Bool, error : ErrorType?) -> Void)
+        {
+            assert(writer.isIdle, "Writer MUST be idle when this method is called.  Later on we could just skip this instead of asserting")
+            // writer is idle so start the frame
+            if currentLength == 0
+            {
+                // first time we are dealing with this frame so do a bit of book keeping
+                if !calculateLengths()
+                {
+                    // this request is finished so call the callback and be done with it
+                    callback?(error: nil)
+                    frameCallback(hasMore: false, error: nil)
+                }
+            }
+            let length = min(remaining, maxFrameSize)
+            let isFirstFrame = numFramesWritten == 0
+            let isFinalFrame = remaining <= maxFrameSize
+            let realOpcode = isFirstFrame ? opcode : WSFrame.Opcode.ContinuationFrame
+            writer.start(realOpcode, frameLength: length, isFinal: isFinalFrame, maskingKey: maskingKey) { (frame, error) -> Void in
+                self.source.write(writer, length: length, completion: { (error) -> Void in
+                    if error != nil
+                    {
+                        frameCallback(hasMore: false, error: error)
+                    } else {
+                        self.satisfied += length
+                        if self.remaining == 0
+                        {
+                            // first time we are dealing with this frame so do a bit of book keeping
+                            if !self.calculateLengths()
+                            {
+                                // this request is finished so call the callback and be done with it
+                                self.callback?(error: nil)
+                                frameCallback(hasMore: false, error: nil)
+                            }
+                        } else
+                        {
+                            frameCallback(hasMore: true, error: nil)
+                        }
+                    }
+                })
+            }
         }
     }
 }
