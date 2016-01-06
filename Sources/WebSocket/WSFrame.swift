@@ -51,6 +51,17 @@ public struct WSFrame
     public var isMasked : Bool = false
     public var isFinal : Bool = false
     public var maskingKey : UInt32 = 0
+    public var maskingKeyBytes :[UInt8] = [0,0,0,0]
+
+    public static func parseMaskingKeyBytes(value: UInt32) -> [UInt8]
+    {
+        return [
+            UInt8((value >> 24) & UInt32(0xff)),
+            UInt8((value >> 16) & UInt32(0xff)),
+            UInt8((value >> 8) & UInt32(0xff)),
+            UInt8(value & UInt32(0xff))
+        ]
+    }
     
     public var isControlFrame : Bool {
         return opcode == .CloseFrame || opcode == .PingFrame || opcode == .PongFrame
@@ -77,6 +88,7 @@ public class WSFrameProcessor
     var currFrameIsMasked : Bool = false
     var currFrameIsFinal : Bool = false
     var currFrameMaskingKey : UInt32 = 0
+    var currFrameMaskingKeyBytes :[UInt8] = [0,0,0,0]
     
     /**
      * The current frame being read
@@ -89,24 +101,26 @@ public class WSFrameProcessor
                 opcode: currFrameOpcode,
                 isMasked: currFrameIsMasked,
                 isFinal: currFrameIsFinal,
-                maskingKey: currFrameMaskingKey)
+                maskingKey: currFrameMaskingKey,
+                maskingKeyBytes: currFrameMaskingKeyBytes)
         }
     }
     
     public var isIdle : Bool {
-        if state == .UNSTARTED
-        {
-            return true
-        }
-        if currFrameSatisfied >= currFrameLength
-        {
-            if currFrameSatisfied != 0
-            {
-                reset()
-            }
-            return true
-        }
-        return  false
+        return state == .UNSTARTED
+//        if state == .UNSTARTED
+//        {
+//            return true
+//        }
+//        if currFrameSatisfied >= currFrameLength
+//        {
+//            if currFrameSatisfied != 0
+//            {
+//                reset()
+//            }
+//            return true
+//        }
+//        return  false
     }
     
     public var processingHeader : Bool {
@@ -114,20 +128,21 @@ public class WSFrameProcessor
     }
     
     public var processingPayload : Bool {
-        if state != .PAYLOAD
-        {
-            return false
-        }
-        
-        if currFrameSatisfied < currFrameLength
-        {
-            return true
-        }
-        if currFrameSatisfied > 0
-        {
-            reset()
-        }
-        return false
+        return state == .PAYLOAD
+//        if state != .PAYLOAD
+//        {
+//            return false
+//        }
+//        
+//        if currFrameSatisfied < currFrameLength
+//        {
+//            return true
+//        }
+//        if currFrameSatisfied > 0
+//        {
+//            reset()
+//        }
+//        return false
     }
     
     private func reset()
@@ -138,6 +153,7 @@ public class WSFrameProcessor
         currFrameOpcode = WSFrame.Opcode.ContinuationFrame
         currFrameIsMasked = false
         currFrameMaskingKey = 0
+        currFrameMaskingKeyBytes = [0,0,0,0]
         currFrameIsFinal = true
     }
 }
@@ -151,16 +167,12 @@ public class WSFrameProcessor
  *
  * If startFrame returns an error then no more frames are available.
  */
-public class WSFrameReader : WSFrameProcessor, Reader
+public class WSFrameReader : WSFrameProcessor
 {
     public typealias FrameStartCallback = (frame: WSFrame?, error : ErrorType?) -> Void
     public typealias FrameReadCallback = IOCallback
     private var reader : Reader
     private var consumer : DataReader
-    
-    public var stream : Stream {
-        return reader.stream
-    }
     
     public init(_ reader : Reader)
     {
@@ -186,14 +198,16 @@ public class WSFrameReader : WSFrameProcessor, Reader
             if !currFrameIsMasked
             {
                 currFrameMaskingKey = 0
+                currFrameMaskingKeyBytes = [0,0,0,0]
                 state = State.PAYLOAD
                 return callback(frame: self.currentFrame, error: nil)
             }
             
             self.consumer.readUInt32 { (value, error) in
                 self.currFrameMaskingKey = value
+                self.currFrameMaskingKeyBytes = WSFrame.parseMaskingKeyBytes(self.currFrameMaskingKey)
                 self.state = .PAYLOAD
-                callback(frame: self.currentFrame, error: nil)
+                callback(frame: self.currentFrame, error: error)
             }
         }
 
@@ -258,7 +272,7 @@ public class WSFrameReader : WSFrameProcessor, Reader
             {
                 if currFrameMaskingKey != 0
                 {
-                    let mask = (currFrameMaskingKey >> UInt32(1 << (8 * (currFrameSatisfied % 4)))) & 0xff
+                    let mask = currFrameMaskingKeyBytes[currFrameSatisfied % 4]
                     out ^= UInt8(mask)
                 }
                 currFrameSatisfied++
@@ -287,11 +301,21 @@ public class WSFrameReader : WSFrameProcessor, Reader
             if error == nil || endReached
             {
                 self.currFrameSatisfied += LengthType(length)
-                if self.currFrameSatisfied >= self.currFrameLength
+                if self.currFrameMaskingKey != 0
                 {
-                    finalError = IOErrorType.EndReached
+                    let firstIndex = self.currFrameSatisfied - length
+                    for i in firstIndex ..< self.currFrameSatisfied
+                    {
+                        let mask = self.currFrameMaskingKeyBytes[i % 4]
+                        buffer[i - firstIndex] ^= UInt8(mask)
+                    }
                 }
-                // TODO: unmask the data
+                if self.currFrameSatisfied >= self.currFrameLength || endReached
+                {
+                    // all the bytes in the frame read so set state to IDLE
+                    finalError = IOErrorType.EndReached
+                    self.reset()
+                }
             }
             callback?(length: length, error: finalError)
         }
@@ -341,12 +365,13 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         currFrameOpcode = opcode
         currFrameIsMasked = maskingKey != 0
         currFrameMaskingKey = maskingKey
+        currFrameMaskingKeyBytes = WSFrame.parseMaskingKeyBytes(maskingKey)
         currFrameIsFinal = isFinal
 
         var numLengthBytes = 0
         
         // TODO: Handle RSVD 1/2/3 and 3 based on extensions
-        var opcodeAndLength1 : LengthType = LengthType((isFinal ? 0xf0 : 0x00) | (opcode.rawValue)) << 8
+        var opcodeAndLength1 : LengthType = LengthType((isFinal ? 0x80 : 0x00) | (opcode.rawValue)) << 8
         if frameLength <= 125
         {
             opcodeAndLength1 |= (frameLength & 0xff)
@@ -374,7 +399,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
                 
                 self.producer.writeUInt32(self.currFrameMaskingKey) { (error) in
                     self.state = .PAYLOAD
-                    completion(frame: self.currentFrame, error: nil)
+                    completion(frame: self.currentFrame, error: error)
                 }
             }
 
@@ -408,7 +433,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         } else {
             if currFrameMaskingKey != 0
             {
-                let mask = (currFrameMaskingKey >> UInt32(1 << (8 * (currFrameSatisfied % 4)))) & 0xff
+                let mask = currFrameMaskingKeyBytes[currFrameSatisfied % 4]
                 value ^= UInt8(mask)
             }
             currFrameSatisfied++
@@ -429,7 +454,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         if currFrameIsMasked && currFrameMaskingKey != 0
         {
             // mask the data
-            let mask = (currFrameMaskingKey >> UInt32(1 << (8 * index))) & 0xff
+            let mask = currFrameMaskingKeyBytes[index]
             for i in 0 ..< realLength
             {
                 buffer[i] = buffer[i] ^ UInt8(mask)

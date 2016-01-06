@@ -151,6 +151,7 @@ public class WSMessageReader
                 CoreFoundationRunLoop.currentRunLoop().enqueueAfter(0.05) {
                     self.continueReading()
                 }
+                return
             }
 
             // reading header so just queue the request
@@ -179,10 +180,7 @@ public class WSMessageReader
                         // on this message
                         self.unwindWithError(IOErrorType.EndReached)
 
-                        self.messageCounter += 1
-                        let newMessage = WSMessage(id: String(format: "%05d", self.messageCounter))
-                        // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
-                        self.onMessage?(message: newMessage)
+                        self.processCurrentNewFrame(nil)
                     } else {
                         // otherwise just block and do a read later on
                     }
@@ -205,7 +203,7 @@ public class WSMessageReader
                         if currReadRequest.remaining == 0
                         {
                             // process the frame and start the next frame
-                            self.processCurrentFrame {
+                            self.processCurrentNewFrame {
                                 self.startNextFrame()
                             }
                         } else {
@@ -242,7 +240,7 @@ public class WSMessageReader
                 if self.controlFrameRequest.remaining == 0
                 {
                     // we have the frame so process it and start the next frame
-                    self.processCurrentFrame {
+                    self.processCurrentNewFrame {
                         self.startNextFrame()
                     }
                 } else {
@@ -258,16 +256,20 @@ public class WSMessageReader
      * This method will only be called when a control frame has
      * finished or if a non-control frame is of size 0
      */
-    private func processCurrentFrame(callback : Void -> Void)
+    private func processCurrentNewFrame(callback : (Void -> Void)?)
     {
         if self.currentFrame.isControlFrame
         {
             // TODO: process the control frame
         } else {
-            // no support for 0 length data frames yet
-            assert(false, "Zero length data non-control frames not yet supported")
+            // ignore 0 length frames
+            self.messageCounter += 1
+            let newMessage = WSMessage(id: String(format: "%05d", self.messageCounter))
+            newMessage.messageType = self.currentFrame.opcode
+            // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
+            self.onMessage?(message: newMessage)
         }
-        callback()
+        callback?()
     }
     
     /**
@@ -488,10 +490,9 @@ public class WSMessageWriter
             let realOpcode = isFirstFrame ? opcode : WSFrame.Opcode.ContinuationFrame
             writer.start(realOpcode, frameLength: length, isFinal: isFinalFrame, maskingKey: maskingKey) { (frame, error) -> Void in
                 self.source.write(writer, length: length, completion: { (error) -> Void in
-                    if error != nil
+                    let endReached = (error as? IOErrorType) == IOErrorType.EndReached
+                    if error == nil || endReached
                     {
-                        frameCallback(hasMore: false, error: error)
-                    } else {
                         self.satisfied += length
                         if self.remaining == 0
                         {
@@ -506,6 +507,8 @@ public class WSMessageWriter
                         {
                             frameCallback(hasMore: true, error: nil)
                         }
+                    } else {
+                        frameCallback(hasMore: false, error: error)
                     }
                 })
             }
