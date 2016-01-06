@@ -53,7 +53,6 @@ public class HttpChunkedReader : Reader {
         case ReadingChunk
     }
     var reader: Reader
-    var consumer : DataReader
     var readState = ReadState.ReadingLength
     var currChunkLength = 0
     var currChunkRead = 0
@@ -65,7 +64,6 @@ public class HttpChunkedReader : Reader {
     public init (reader: Reader)
     {
         self.reader = reader
-        self.consumer = DataReader(reader)
     }
 
     public var bytesReadable : LengthType {
@@ -85,7 +83,7 @@ public class HttpChunkedReader : Reader {
     public func read(buffer: ReadBufferType, length: LengthType, callback: IOCallback?)
     {
         if readState == ReadState.ReadingLength {
-            consumer.readTillChar(LF, callback: { (str, error) -> () in
+            reader.readTillChar(LF, callback: { (str, error) -> () in
                 // we have the length now
                 let lengthString = str.substringToIndex(str.endIndex.predecessor())  // remove the \r
                 self.currChunkLength = Int(strtoul(lengthString, nil, 16))
@@ -97,12 +95,12 @@ public class HttpChunkedReader : Reader {
         } else {
             // read the actual data chunk now
             let numToRead = min(length, currChunkLength) - currChunkRead
-            consumer.read(buffer.advancedBy(currChunkRead), length: numToRead, callback: { (length, error) -> () in
+            reader.read(buffer.advancedBy(currChunkRead), length: numToRead, callback: { (length, error) -> () in
                 self.currChunkRead += length
                 if self.currChunkRead >= self.currChunkLength {
                     // chunk read so reset state
                     self.readState = ReadState.ReadingLength
-                    self.consumer.readTillChar(LF, callback: nil)
+                    self.reader.readTillChar(LF, callback: nil)
                 }
                 callback?(length: self.currChunkRead, error: error)
             })
