@@ -21,7 +21,6 @@ public extension WSMessage
 
 public class WSEchoHandler : WSConnectionHandler
 {
-    var reader : DataReader?
     var connection : WSConnection?
     
     // Handles a new connection
