@@ -73,6 +73,10 @@ public class HttpChunkedReader : Reader {
     public func read() -> (value: UInt8, error: ErrorType?) {
         return reader.read()
     }
+    
+    public func peek(callback: PeekCallback?) {
+        assert(false, "Not yet implemented")
+    }
 
     /**
      * Read from the reader where the data has been chunk encoded as:

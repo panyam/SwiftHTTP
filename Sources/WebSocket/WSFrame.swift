@@ -172,12 +172,10 @@ public class WSFrameReader : WSFrameProcessor
     public typealias FrameStartCallback = (frame: WSFrame?, error : ErrorType?) -> Void
     public typealias FrameReadCallback = IOCallback
     private var reader : Reader
-    private var consumer : DataReader
     
     public init(_ reader : Reader)
     {
         self.reader = reader
-        self.consumer = DataReader(reader)
     }
 
     /**
@@ -203,7 +201,7 @@ public class WSFrameReader : WSFrameProcessor
                 return callback(frame: self.currentFrame, error: nil)
             }
             
-            self.consumer.readUInt32 { (value, error) in
+            self.reader.readUInt32 { (value, error) in
                 self.currFrameMaskingKey = value
                 self.currFrameMaskingKeyBytes = WSFrame.parseMaskingKeyBytes(self.currFrameMaskingKey)
                 self.state = .PAYLOAD
@@ -212,43 +210,38 @@ public class WSFrameReader : WSFrameProcessor
         }
 
         // read type and first length bit
-        consumer.consume({ (reader) -> (finished: Bool, error: ErrorType?) in
-            self.consumer.readUInt16 { (var value, error) in
-                self.currFrameLength = LengthType(value & UInt16((1 << 7) - 1))
-                value = value >> 7
-                
-                self.currFrameIsMasked = ((value & UInt16(1)) == 1)
-                value = value >> 1
-                
-                // TODO: validate opcode types
-                self.currFrameOpcode = WSFrame.Opcode(rawValue: UInt8(value & 0x0f))!
-                value = value >> 7
-
-                self.currFrameIsFinal = ((value & UInt16(1)) == 1)
-                value = value >> 1
-                
-                if self.currFrameLength == 126
-                {
-                    // 2 byte payload length
-                    self.consumer.readUInt16({ (value, error) in
-                        self.currFrameLength = LengthType(value)
-                        readMaskingKeyAndContinue(callback)
-                    })
-                } else if self.currFrameLength == 127
-                {
-                    // 8 byte payload length
-                    self.consumer.readUInt64({ (value, error) in
-                        self.currFrameLength = LengthType(value)
-                        readMaskingKeyAndContinue(callback)
-                    })
-                } else {
+        self.reader.readUInt16 { (var value, error) in
+            self.currFrameLength = LengthType(value & UInt16((1 << 7) - 1))
+            value = value >> 7
+            
+            self.currFrameIsMasked = ((value & UInt16(1)) == 1)
+            value = value >> 1
+            
+            // TODO: validate opcode types
+            self.currFrameOpcode = WSFrame.Opcode(rawValue: UInt8(value & 0x0f))!
+            value = value >> 7
+            
+            self.currFrameIsFinal = ((value & UInt16(1)) == 1)
+            value = value >> 1
+            
+            if self.currFrameLength == 126
+            {
+                // 2 byte payload length
+                self.reader.readUInt16({ (value, error) in
+                    self.currFrameLength = LengthType(value)
                     readMaskingKeyAndContinue(callback)
-                }
+                })
+            } else if self.currFrameLength == 127
+            {
+                // 8 byte payload length
+                self.reader.readUInt64({ (value, error) in
+                    self.currFrameLength = LengthType(value)
+                    readMaskingKeyAndContinue(callback)
+                })
+            } else {
+                readMaskingKeyAndContinue(callback)
             }
-            return (true, nil)
-        }, onError: { (error) -> ErrorType? in
-            return error
-        })
+        }
     }
     
     public var bytesReadable : LengthType {
