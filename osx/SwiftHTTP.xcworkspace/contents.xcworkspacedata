@@ -2,12 +2,12 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:SwiftHTTPDemos/SwiftHTTPDemos.xcodeproj">
-   </FileRef>
-   <FileRef
       location = "group:../../SwiftIO/SwiftIO.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:SwiftHTTP.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:SwiftHTTPDemos/SwiftHTTPDemos.xcodeproj">
    </FileRef>
 </Workspace>
