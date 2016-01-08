@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CommonCrypto
 
 extension String {
     func SHA1Bytes() -> NSData

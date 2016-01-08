@@ -1,5 +1,6 @@
 
 import SwiftIO
+import SwiftHTTP
 
 let MESSAGE_READ_SIZE = 512
 

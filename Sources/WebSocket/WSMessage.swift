@@ -13,7 +13,7 @@ public class WSMessage
     /**
      * Message type being sent
      */
-    var messageType : WSFrame.Opcode = WSFrame.Opcode.ContinuationFrame
+    public var messageType : WSFrame.Opcode = WSFrame.Opcode.ContinuationFrame
     
     /**
      * An user defined identifier associated with a message.

@@ -1,5 +1,6 @@
 
 import SwiftIO
+import SwiftHTTP
 
 func testHTTP1Server()
 {

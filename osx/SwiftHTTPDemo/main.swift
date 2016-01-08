@@ -1,4 +1,6 @@
 
+import Foundation
+
 func signal_handler(signum: Int32)
 {
     print("Ignoring Signal: \(signum)")

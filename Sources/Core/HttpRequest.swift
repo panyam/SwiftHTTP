@@ -2,12 +2,12 @@
 import SwiftIO
 
 public class HttpRequest : HttpMessage, CustomStringConvertible {
-    var method = "GET"
-    var version = "HTTP 1.1"
+    public var method = "GET"
+    public var version = "HTTP 1.1"
     private var fullPath : String = ""
-    var resourcePath : String = ""
-    var fragment : String = ""
-    var queryParams = StringMultiMap(caseSensitiveKeys: true)
+    public var resourcePath : String = ""
+    public var fragment : String = ""
+    public var queryParams = StringMultiMap(caseSensitiveKeys: true)
     var reader : BufferedReader?
     
     public override func reset()
