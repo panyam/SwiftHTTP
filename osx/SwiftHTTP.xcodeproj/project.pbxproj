@@ -12,11 +12,7 @@
 		F78B5AC11C3DECC20018FEAE /* SwiftHTTP.h in Headers */ = {isa = PBXBuildFile; fileRef = F78B5AC01C3DECC20018FEAE /* SwiftHTTP.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F78B5AC81C3DECC20018FEAE /* SwiftHTTP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F78B5ABE1C3DECC20018FEAE /* SwiftHTTP.framework */; };
 		F78B5ACD1C3DECC20018FEAE /* SwiftHTTPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78B5ACC1C3DECC20018FEAE /* SwiftHTTPTests.swift */; };
-		F78B5ADC1C3DED550018FEAE /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78B5ADB1C3DED550018FEAE /* main.swift */; };
-		F78B5AE21C3DEDA50018FEAE /* http1demo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78B5AE01C3DEDA50018FEAE /* http1demo.swift */; };
-		F78B5AE31C3DEDA50018FEAE /* wsechoserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78B5AE11C3DEDA50018FEAE /* wsechoserver.swift */; };
 		F78B5AE51C3DEDBA0018FEAE /* SwiftIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F78B5AE41C3DEDBA0018FEAE /* SwiftIO.framework */; };
-		F78B5AE61C3DEDD10018FEAE /* SwiftHTTP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F78B5ABE1C3DECC20018FEAE /* SwiftHTTP.framework */; };
 		F78B5AE71C3DEE8D0018FEAE /* Base64.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F79C1C30E4E900A59A75 /* Base64.swift */; };
 		F78B5AE81C3DEE8D0018FEAE /* Crypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = F769F7A01C30F75600A59A75 /* Crypto.swift */; };
 		F78B5AE91C3DEE8D0018FEAE /* Payload.swift in Sources */ = {isa = PBXBuildFile; fileRef = F772FDDA1C360DF00053646F /* Payload.swift */; };
@@ -57,18 +53,6 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		F78B5AD71C3DED550018FEAE /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		F71DB0B11C3F4BCD00837E18 /* CommonCrypto.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CommonCrypto.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F71DB0B51C3F4BCD00837E18 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -103,10 +87,6 @@
 		F78B5AC71C3DECC20018FEAE /* SwiftHTTPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftHTTPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F78B5ACC1C3DECC20018FEAE /* SwiftHTTPTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftHTTPTests.swift; sourceTree = "<group>"; };
 		F78B5ACE1C3DECC20018FEAE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F78B5AD91C3DED550018FEAE /* SwiftHTTPDemo */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SwiftHTTPDemo; sourceTree = BUILT_PRODUCTS_DIR; };
-		F78B5ADB1C3DED550018FEAE /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		F78B5AE01C3DEDA50018FEAE /* http1demo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = http1demo.swift; sourceTree = "<group>"; };
-		F78B5AE11C3DEDA50018FEAE /* wsechoserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = wsechoserver.swift; sourceTree = "<group>"; };
 		F78B5AE41C3DEDBA0018FEAE /* SwiftIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftIO.framework; path = "../../../Library/Developer/Xcode/DerivedData/SwiftHTTP-chyfuiymxsnxlsgsrnjhtqkdpxui/Build/Products/Debug/SwiftIO.framework"; sourceTree = "<group>"; };
 		F78B5AFC1C3DEEE30018FEAE /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		F78B5AFE1C3DF15E0018FEAE /* libcommonCrypto.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcommonCrypto.tbd; path = usr/lib/system/libcommonCrypto.tbd; sourceTree = SDKROOT; };
@@ -138,14 +118,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F78B5AC81C3DECC20018FEAE /* SwiftHTTP.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F78B5AD61C3DED550018FEAE /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F78B5AE61C3DEDD10018FEAE /* SwiftHTTP.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,23 +199,12 @@
 			path = SwiftHTTPTests;
 			sourceTree = "<group>";
 		};
-		F78B5ADA1C3DED550018FEAE /* SwiftHTTPDemo */ = {
-			isa = PBXGroup;
-			children = (
-				F78B5AE01C3DEDA50018FEAE /* http1demo.swift */,
-				F78B5AE11C3DEDA50018FEAE /* wsechoserver.swift */,
-				F78B5ADB1C3DED550018FEAE /* main.swift */,
-			);
-			path = SwiftHTTPDemo;
-			sourceTree = "<group>";
-		};
 		F7CF63891C1E715000493204 = {
 			isa = PBXGroup;
 			children = (
+				F71DB0B21C3F4BCD00837E18 /* CommonCrypto */,
 				F78B5ABF1C3DECC20018FEAE /* SwiftHTTP */,
 				F78B5ACB1C3DECC20018FEAE /* SwiftHTTPTests */,
-				F78B5ADA1C3DED550018FEAE /* SwiftHTTPDemo */,
-				F71DB0B21C3F4BCD00837E18 /* CommonCrypto */,
 				F7CF63931C1E715000493204 /* Products */,
 				2803102C5113276E6DE0E2DB /* Frameworks */,
 			);
@@ -254,7 +215,6 @@
 			children = (
 				F78B5ABE1C3DECC20018FEAE /* SwiftHTTP.framework */,
 				F78B5AC71C3DECC20018FEAE /* SwiftHTTPTests.xctest */,
-				F78B5AD91C3DED550018FEAE /* SwiftHTTPDemo */,
 				F71DB0B11C3F4BCD00837E18 /* CommonCrypto.framework */,
 			);
 			name = Products;
@@ -367,23 +327,6 @@
 			productReference = F78B5AC71C3DECC20018FEAE /* SwiftHTTPTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		F78B5AD81C3DED550018FEAE /* SwiftHTTPDemo */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F78B5ADD1C3DED550018FEAE /* Build configuration list for PBXNativeTarget "SwiftHTTPDemo" */;
-			buildPhases = (
-				F78B5AD51C3DED550018FEAE /* Sources */,
-				F78B5AD61C3DED550018FEAE /* Frameworks */,
-				F78B5AD71C3DED550018FEAE /* CopyFiles */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = SwiftHTTPDemo;
-			productName = SwiftHTTPDemo;
-			productReference = F78B5AD91C3DED550018FEAE /* SwiftHTTPDemo */;
-			productType = "com.apple.product-type.tool";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -403,9 +346,6 @@
 					F78B5AC61C3DECC20018FEAE = {
 						CreatedOnToolsVersion = 7.2;
 					};
-					F78B5AD81C3DED550018FEAE = {
-						CreatedOnToolsVersion = 7.2;
-					};
 				};
 			};
 			buildConfigurationList = F7CF638D1C1E715000493204 /* Build configuration list for PBXProject "SwiftHTTP" */;
@@ -422,7 +362,6 @@
 			targets = (
 				F78B5ABD1C3DECC20018FEAE /* SwiftHTTP */,
 				F78B5AC61C3DECC20018FEAE /* SwiftHTTPTests */,
-				F78B5AD81C3DED550018FEAE /* SwiftHTTPDemo */,
 				F71DB0B01C3F4BCD00837E18 /* CommonCrypto */,
 			);
 		};
@@ -493,16 +432,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F78B5ACD1C3DECC20018FEAE /* SwiftHTTPTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F78B5AD51C3DED550018FEAE /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F78B5AE21C3DEDA50018FEAE /* http1demo.swift in Sources */,
-				F78B5AE31C3DEDA50018FEAE /* wsechoserver.swift in Sources */,
-				F78B5ADC1C3DED550018FEAE /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -644,22 +573,6 @@
 			};
 			name = Release;
 		};
-		F78B5ADE1C3DED550018FEAE /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		F78B5ADF1C3DED550018FEAE /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 		F7CF63971C1E715000493204 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -766,15 +679,6 @@
 			buildConfigurations = (
 				F78B5AD31C3DECC20018FEAE /* Debug */,
 				F78B5AD41C3DECC20018FEAE /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		F78B5ADD1C3DED550018FEAE /* Build configuration list for PBXNativeTarget "SwiftHTTPDemo" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				F78B5ADE1C3DED550018FEAE /* Debug */,
-				F78B5ADF1C3DED550018FEAE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

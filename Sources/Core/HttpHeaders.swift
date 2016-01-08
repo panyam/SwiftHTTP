@@ -8,25 +8,25 @@ public class Header {
         self.name = name
     }
 
-    func getName() -> String {
+    public func getName() -> String {
         return name
     }
 
     /**
      * Clears all values for this header.
      */
-    func clear() {
+    public func clear() {
         values.removeAll()
     }
 
-    func isEmpty() -> Bool {
+    public func isEmpty() -> Bool {
         return values.isEmpty
     }
 
     /**
      * Removes all values and sets the 
      */
-    func setValue(value: String) {
+    public func setValue(value: String) {
         values = [value];
     }
 
@@ -37,11 +37,11 @@ public class Header {
         values.append(value);
     }
 
-    func allValues() -> [String] {
+    public func allValues() -> [String] {
         return values
     }
 
-    func firstValue() -> String? {
+    public func firstValue() -> String? {
         return values[0]
     }
 }

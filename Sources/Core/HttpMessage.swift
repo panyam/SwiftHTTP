@@ -97,8 +97,8 @@ public class HeaderCollection : StringMultiMap, CustomStringConvertible
 }
 
 public class HttpMessage {
-    var headers = HeaderCollection(caseSensitiveKeys: false)
-    
+    public var headers = HeaderCollection(caseSensitiveKeys: false)
+
     weak var parent : HttpConnection?
     public var connection: HttpConnection? {
         get {
