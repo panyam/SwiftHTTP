@@ -8,6 +8,9 @@
 
 import SwiftIO
 
+let READ_QUEUE_INTERVAL = 1.0
+let WRITE_QUEUE_INTERVAL = 1.0
+
 public class WSMessage
 {
     /**
@@ -147,8 +150,8 @@ public class WSMessageReader
             {
                 // then try again in a few milli seconds
                 // TODO: Get the right runloop
-                print("Read queue empty.  Dispatching again later on");
-                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(0.05) {
+                print("\(NSDate()) - Read queue empty.  Dispatching again later on");
+                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(READ_QUEUE_INTERVAL) {
                     self.continueReading()
                 }
                 return
@@ -212,7 +215,7 @@ public class WSMessageReader
                         }
                     } else {
                         self.readQueue.removeFirst()
-                        currReadRequest.callback?(length: currReadRequest.satisfied, error: error)
+                        currReadRequest.callback?(length: currReadRequest.satisfied, error: nil)
                         if currReadRequest.remaining == 0
                         {
                             self.unwindWithError(IOErrorType.EndReached)
@@ -237,14 +240,14 @@ public class WSMessageReader
                 self.currentFrame = frame!
                 self.controlFrameRequest.satisfied = 0
                 self.controlFrameRequest.length = self.currentFrame.payloadLength
-                if self.controlFrameRequest.remaining == 0
-                {
-                    // we have the frame so process it and start the next frame
-                    self.processCurrentNewFrame {
+                // we have the frame so process it and start the next frame
+                self.processCurrentNewFrame {
+                    if self.currentFrame.payloadLength == 0
+                    {
                         self.startNextFrame()
+                    } else {
+                        self.continueReading()
                     }
-                } else {
-                    self.continueReading()
                 }
             } else {
                 self.onClosed?()
@@ -262,7 +265,6 @@ public class WSMessageReader
         {
             // TODO: process the control frame
         } else {
-            // ignore 0 length frames
             self.messageCounter += 1
             let newMessage = WSMessage(id: String(format: "%05d", self.messageCounter))
             newMessage.messageType = self.currentFrame.opcode
@@ -349,6 +351,8 @@ public class WSMessageWriter
         continueWriting()
     }
     
+    var writeTimerRequested = false
+    
     /**
      * Writing messages is slightly simpler than reading messages.  With reading there was the problem of not
      * knowing when a message started and having to notify connection handlers on new messages so that *then*
@@ -373,11 +377,13 @@ public class WSMessageWriter
             } else if let nextWriteRequest = self.writeQueue.first
             {
                 sendNextFrame(nextWriteRequest)
-            } else {
+            } else if !writeTimerRequested {
+                writeTimerRequested = true
                 // no requests left AND the writer is idle so try again later on
                 // TODO: Get the right runloop
-                print("Write queue empty.  Dispatching again later on")
-                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(0.05) {
+                print("\(NSDate()) - Write queue empty.  Dispatching again later on");
+                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(WRITE_QUEUE_INTERVAL) {
+                    self.writeTimerRequested = false
                     self.continueWriting()
                 }
             }
@@ -456,18 +462,28 @@ public class WSMessageWriter
         
         func calculateLengths() -> Bool
         {
-            if let totalLength = source.totalLength
+            if numFramesWritten == 0
             {
-                hasTotalLength = true
-                currentLength = LengthType(totalLength)
-            } else if let currFrameLength = source.nextFrame()
-            {
-                hasTotalLength = false
-                currentLength = LengthType(currFrameLength)
-            } else {
-                return false
+                if let totalLength = source.totalLength
+                {
+                    hasTotalLength = true
+                    currentLength = LengthType(totalLength)
+                    return true
+                } else if let currFrameLength = source.nextFrame()
+                {
+                    hasTotalLength = false
+                    currentLength = LengthType(currFrameLength)
+                    return true
+                }
+            } else if !hasTotalLength {
+                // should no longer calculate total Length
+                if let currFrameLength = source.nextFrame()
+                {
+                    currentLength = LengthType(currFrameLength)
+                    return true
+                }
             }
-            return true
+            return false
         }
         
         func writeNextFrame(writer: WSFrameWriter, maxFrameSize: Int, frameCallback : (hasMore : Bool, error : ErrorType?) -> Void)
@@ -493,6 +509,7 @@ public class WSMessageWriter
                     let endReached = (error as? IOErrorType) == IOErrorType.EndReached
                     if error == nil || endReached
                     {
+                        self.numFramesWritten += 1
                         self.satisfied += length
                         if self.remaining == 0
                         {

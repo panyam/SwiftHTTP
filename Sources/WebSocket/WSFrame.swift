@@ -435,7 +435,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
     }
     
     public func write(buffer: WriteBufferType, length: LengthType, _ callback: IOCallback?) {
-        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
+        if state != .PAYLOAD
         {
             reset()
             callback?(length: 0, error: IOErrorType.EndReached)
@@ -475,6 +475,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
                 if self.currFrameSatisfied >= self.currFrameLength
                 {
                     finalError = IOErrorType.EndReached
+                    self.reset()
                 } else {
                     // more data left so call write again
                     return self.writeRaw(buffer.advancedBy(length), length: requestedLength - length, callback)
