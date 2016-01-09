@@ -49,11 +49,11 @@ public class WSEchoHandler : WSConnectionHandler
         }
         let response = message.extraData("response") as! WSMessage
 
-        connection?.read(message, buffer: buffer, length: MESSAGE_READ_SIZE) {(length: LengthType, error: ErrorType?) in
+        connection?.read(message, buffer: buffer, length: MESSAGE_READ_SIZE) {(length, endReached, error) in
             if error == nil
             {
                 let source = BufferPayload(buffer: buffer, length: length)
-                self.connection?.write(response, source: source) { (error) in
+                self.connection?.write(response, source: source, isFinal: endReached) { (error) in
                     if error == nil && length > 0 {
                         // process message by doing more reads on the message
                         // or call message.discard() to discard the rest of the

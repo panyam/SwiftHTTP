@@ -126,7 +126,7 @@ public class WSConnection
         self.messageWriter.closeMessage(message, callback: callback)
     }
     
-    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: IOCallback?)
+    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: WSMessageReadCallback?)
     {
         self.messageReader.read(message, buffer: buffer, length: length, callback: callback)
     }

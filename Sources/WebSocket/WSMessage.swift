@@ -12,6 +12,8 @@ let READ_QUEUE_INTERVAL = 1.0
 let WRITE_QUEUE_INTERVAL = 1.0
 public let DEFAULT_MAX_FRAME_SIZE = 32
 
+public typealias WSMessageReadCallback = (length: LengthType, endReached: Bool, error: ErrorType?) -> Void
+
 public class WSMessage
 {
     /**
@@ -69,7 +71,11 @@ public class WSMessage
     
     public func close(callback: CompletionCallback?)
     {
-        assert(false, "Not yet implemented")
+//        assert(false, "Not yet implemented")
+    }
+    
+    public var hasMoreFrames : Bool {
+        return !writeQueue.isEmpty
     }
     
     class WriteRequest
@@ -253,11 +259,11 @@ public class WSMessageReader
      * Looks like both cases can be solved with a periodic read that happens in a loop (say every second or so as long as the 
      * read queue is empty)
      */
-    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: IOCallback?)
+    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: WSMessageReadCallback?)
     {
         if transportClosed
         {
-            callback?(length: 0, error: IOErrorType.Closed)
+            callback?(length: 0, endReached: true, error: IOErrorType.Closed)
         } else {
             // queue the request
             let newRequest = WSReadRequest(message: message, buffer: buffer, fully: false, length: length, satisfied: 0, callback: callback)
@@ -349,7 +355,7 @@ public class WSMessageReader
                         }
                     } else {
                         self.readQueue.removeFirst()
-                        currReadRequest.callback?(length: currReadRequest.satisfied, error: error)
+                        currReadRequest.callback?(length: currReadRequest.satisfied, endReached: false, error: error)
                         if currReadRequest.remaining == 0
                         {
                             self.unwindWithError(nil)
@@ -435,7 +441,7 @@ public class WSMessageReader
             if let next = self.readQueue.first
             {
                 self.readQueue.removeFirst()
-                next.callback?(length: next.satisfied, error: error)
+                next.callback?(length: next.satisfied, endReached: false, error: error)
             }
         }
     }
@@ -447,7 +453,7 @@ public class WSMessageReader
         var fully : Bool = false
         var length : LengthType
         var satisfied : LengthType = 0
-        var callback : IOCallback?
+        var callback : WSMessageReadCallback?
         
         var remaining : LengthType { return length - satisfied }
     }
@@ -494,8 +500,10 @@ public class WSMessageWriter
      */
     public func startMessage(opcode: WSFrame.Opcode) -> WSMessage
     {
+        assert(normalMessage == nil)
         currResponseIndex += 1
-        return WSMessage(type: opcode, id: String(format: "resp:%05d", currResponseIndex))
+        normalMessage = WSMessage(type: opcode, id: String(format: "resp:%05d", currResponseIndex))
+        return normalMessage!
     }
 
     /**
@@ -564,8 +572,7 @@ public class WSMessageWriter
             }
             else
             {
-                let hasMore = !message.writeQueue.isEmpty
-                if !hasMore
+                if !message.hasMoreFrames
                 {
                     // remove the request from the queue as it is done
                     if message === self.controlMessage
