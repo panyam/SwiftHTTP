@@ -10,7 +10,7 @@ import SwiftIO
 
 let READ_QUEUE_INTERVAL = 1.0
 let WRITE_QUEUE_INTERVAL = 1.0
-public let DEFAULT_MAX_FRAME_SIZE = 32
+public let DEFAULT_MAX_FRAME_SIZE = 8192
 
 public typealias WSMessageReadCallback = (length: LengthType, endReached: Bool, error: ErrorType?) -> Void
 
@@ -135,7 +135,7 @@ public class WSMessage
         }
     }
     
-    func writeNextFrame(writer: WSFrameWriter, maxFrameSize: Int, frameCallback : CompletionCallback)
+    func writeNextFrame(writer: WSFrameWriter, maxFrameSize: Int, frameCallback : (writeRequest: WriteRequest?, error: ErrorType?) -> Void)
     {
         assert(writer.isIdle, "Writer MUST be idle when this method is called.  Later on we could just skip this instead of asserting")
         // writer is idle so start the frame
@@ -147,8 +147,7 @@ public class WSMessage
                 if !writeRequest.calculateLengths()
                 {
                     writeQueue.removeFirst()
-                    writeRequest.callback?(error: nil)
-                    frameCallback(error: nil)
+                    frameCallback(writeRequest: writeRequest, error: nil)
                     return
                 }
             }
@@ -160,8 +159,7 @@ public class WSMessage
             writer.start(realOpcode, frameLength: length, isFinal: isFinalFrame, maskingKey: writeRequest.maskingKey) { (frame, error) in
                 if error != nil {
                     self.writeQueue.removeFirst()
-                    writeRequest.callback?(error: error)
-                    frameCallback(error: error)
+                    frameCallback(writeRequest: writeRequest, error: error)
                     return
                 }
                 writeRequest.source.write(writer, length: length) { (error) in
@@ -176,11 +174,12 @@ public class WSMessage
                             if !writeRequest.calculateLengths()
                             {
                                 self.writeQueue.removeFirst()
-                                writeRequest.callback?(error: nil)
+                                frameCallback(writeRequest: writeRequest, error: nil)
+                                return
                             }
                         }
                     }
-                    frameCallback(error: error)
+                    frameCallback(writeRequest: nil, error: error)
                 }
             }
         }
@@ -355,7 +354,7 @@ public class WSMessageReader
                         }
                     } else {
                         self.readQueue.removeFirst()
-                        currReadRequest.callback?(length: currReadRequest.satisfied, endReached: false, error: error)
+                        currReadRequest.callback?(length: currReadRequest.satisfied, endReached: self.reader.remaining == 0, error: error)
                         if currReadRequest.remaining == 0
                         {
                             self.unwindWithError(nil)
@@ -564,28 +563,30 @@ public class WSMessageWriter
     
     private func sendNextFrame(message: WSMessage)
     {
-        message.writeNextFrame(writer, maxFrameSize: maxFrameSize) { (error) -> Void in
+        message.writeNextFrame(writer, maxFrameSize: maxFrameSize) { (writeRequest, error) -> Void in
             if error != nil
             {
                 self.transportClosed = (error as? IOErrorType) == IOErrorType.Closed
+                writeRequest?.callback?(error: error)
                 self.unwindWithError(message, error: error!)
             }
             else
             {
                 if !message.hasMoreFrames
                 {
-                    // remove the request from the queue as it is done
-                    if message === self.controlMessage
-                    {
-                        self.controlMessage = nil
-                    } else if message === self.normalMessage
-                    {
-                        self.normalMessage = nil
-                    } else {
-                        assert(false, "Invalid message found")
-                    }
+//                    // remove the request from the queue as it is done
+//                    if message === self.controlMessage
+//                    {
+//                        self.controlMessage = nil
+//                    } else if message === self.normalMessage
+//                    {
+//                        self.normalMessage = nil
+//                    } else {
+//                        assert(false, "Invalid message found")
+//                    }
                     assert(self.writer.isIdle)
                 }
+                writeRequest?.callback?(error: error)
                 self.continueWriting()
             }
         }

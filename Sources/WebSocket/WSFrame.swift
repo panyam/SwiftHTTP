@@ -90,6 +90,11 @@ public class WSFrameProcessor
     var currFrameMaskingKey : UInt32 = 0
     var currFrameMaskingKeyBytes :[UInt8] = [0,0,0,0]
     
+    public var remaining : LengthType
+    {
+        return currFrameLength - currFrameSatisfied
+    }
+    
     /**
      * The current frame being read
      */
@@ -187,6 +192,7 @@ public class WSFrameReader : WSFrameProcessor
         }
         
         reset()
+        state = .HEADER
         
         func readMaskingKeyAndContinue(error: ErrorType?, _ callback : FrameStartCallback)
         {
@@ -346,7 +352,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         }
         
         reset()
-        state = .UNSTARTED
+        state = .HEADER
         currFrameSatisfied = 0
         currFrameLength = frameLength
         currFrameOpcode = opcode
