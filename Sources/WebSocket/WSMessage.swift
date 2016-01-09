@@ -10,6 +10,7 @@ import SwiftIO
 
 let READ_QUEUE_INTERVAL = 1.0
 let WRITE_QUEUE_INTERVAL = 1.0
+public let DEFAULT_MAX_FRAME_SIZE = 128
 
 public class WSMessage
 {
@@ -54,6 +55,7 @@ public class WSMessage
 public class WSMessageReader
 {
     private var messageCounter = 0
+    private var transportClosed = false
     public typealias ClosedCallback = Void -> Void
     public typealias MessageCallback = (message: WSMessage) -> Void
     public var onMessage : MessageCallback?
@@ -124,10 +126,15 @@ public class WSMessageReader
      */
     public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: IOCallback?)
     {
-        // queue the request
-        let newRequest = WSReadRequest(message: message, buffer: buffer, fully: false, length: length, satisfied: 0, callback: callback)
-        readQueue.append(newRequest)
-        continueReading()
+        if transportClosed
+        {
+            callback?(length: 0, error: IOErrorType.Closed)
+        } else {
+            // queue the request
+            let newRequest = WSReadRequest(message: message, buffer: buffer, fully: false, length: length, satisfied: 0, callback: callback)
+            readQueue.append(newRequest)
+            continueReading()
+        }
     }
     
     /**
@@ -140,7 +147,7 @@ public class WSMessageReader
         if reader.isIdle
         {
             // no frames have been read yet
-            print("Message reader is idle.  Kicking off next frame")
+            print("Self: \(self), Message reader is idle.  Kicking off next frame")
             startNextFrame()
         }
         
@@ -242,17 +249,26 @@ public class WSMessageReader
                 self.controlFrameRequest.length = self.currentFrame.payloadLength
                 // we have the frame so process it and start the next frame
                 self.processCurrentNewFrame {
-                    if self.currentFrame.payloadLength == 0
+                    if !self.transportClosed
                     {
-                        self.startNextFrame()
-                    } else {
-                        self.continueReading()
+                        if self.currentFrame.payloadLength == 0
+                        {
+                            self.startNextFrame()
+                        } else {
+                            self.continueReading()
+                        }
                     }
                 }
             } else {
-                self.onClosed?()
+                self.readerClosed()
             }
         }
+    }
+    
+    private func readerClosed()
+    {
+        transportClosed = true
+        self.onClosed?()
     }
     
     /**
@@ -263,7 +279,14 @@ public class WSMessageReader
     {
         if self.currentFrame.isControlFrame
         {
-            // TODO: process the control frame
+            if self.currentFrame.opcode == WSFrame.Opcode.CloseFrame
+            {
+                // close the connection
+                self.readerClosed()
+            } else {
+                // TODO: process the control frame
+                print("Processing control frame?")
+            }
         } else {
             self.messageCounter += 1
             let newMessage = WSMessage(id: String(format: "%05d", self.messageCounter))
@@ -280,6 +303,7 @@ public class WSMessageReader
      */
     private func unwindWithError(error: ErrorType)
     {
+        self.transportClosed = (error as? IOErrorType) == IOErrorType.Closed
         while !self.readQueue.isEmpty
         {
             if let next = self.readQueue.first
@@ -306,12 +330,13 @@ public class WSMessageReader
 public class WSMessageWriter
 {
     public typealias ClosedCallback = Void -> Void
+    public var transportClosed = false
     public var onClosed : ClosedCallback?
 
     /**
      * Frames wont be bigger than this
      */
-    private var maxFrameSize : Int = DEFAULT_BUFFER_LENGTH
+    private var maxFrameSize : Int = DEFAULT_MAX_FRAME_SIZE
     
     /**
      */
@@ -334,24 +359,27 @@ public class WSMessageWriter
     
     public convenience init(_ writer: WSFrameWriter)
     {
-        self.init(writer, maxFrameSize: DEFAULT_BUFFER_LENGTH)
+        self.init(writer, maxFrameSize: DEFAULT_MAX_FRAME_SIZE)
     }
 
     public func write(opcode: WSFrame.Opcode, maskingKey: UInt32, source: Payload, callback: CompletionCallback?)
     {
         // queue the request
-        let newRequest = WSWriteRequest(opcode: opcode, source: source, callback: callback)
-        newRequest.maskingKey = maskingKey
-        if opcode.isControlCode
+        if self.transportClosed
         {
-            controlWriteQueue.append(newRequest)
+            callback?(error: IOErrorType.Closed)
         } else {
-            writeQueue.append(newRequest)
+            let newRequest = WSWriteRequest(opcode: opcode, source: source, callback: callback)
+            newRequest.maskingKey = maskingKey
+            if opcode.isControlCode
+            {
+                controlWriteQueue.append(newRequest)
+            } else {
+                writeQueue.append(newRequest)
+            }
+            continueWriting()
         }
-        continueWriting()
     }
-    
-    var writeTimerRequested = false
     
     /**
      * Writing messages is slightly simpler than reading messages.  With reading there was the problem of not
@@ -377,15 +405,6 @@ public class WSMessageWriter
             } else if let nextWriteRequest = self.writeQueue.first
             {
                 sendNextFrame(nextWriteRequest)
-            } else if !writeTimerRequested {
-                writeTimerRequested = true
-                // no requests left AND the writer is idle so try again later on
-                // TODO: Get the right runloop
-                print("\(NSDate()) - Write queue empty.  Dispatching again later on");
-                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(WRITE_QUEUE_INTERVAL) {
-                    self.writeTimerRequested = false
-                    self.continueWriting()
-                }
             }
         }
     }
@@ -393,8 +412,10 @@ public class WSMessageWriter
     private func sendNextFrame(writeRequest : WSWriteRequest)
     {
         writeRequest.writeNextFrame(writer, maxFrameSize: maxFrameSize) { (hasMore, error) -> Void in
+            print("Frame written,request: \(writeRequest), hasMore: \(hasMore) Error: \(error)")
             if error != nil
             {
+                self.transportClosed = (error as? IOErrorType) == IOErrorType.Closed
                 self.unwindWithError(error!)
             }
             else
@@ -411,6 +432,8 @@ public class WSMessageWriter
                         assert(self.writeQueue.first === writeRequest)
                         self.writeQueue.removeFirst()
                     }
+                } else {
+                    print("Why are we here?")
                 }
                 self.continueWriting()
             }
@@ -496,7 +519,9 @@ public class WSMessageWriter
                 if !calculateLengths()
                 {
                     // this request is finished so call the callback and be done with it
-                    callback?(error: nil)
+//                    CoreFoundationRunLoop.currentRunLoop().enqueue{ () -> Void in
+                        self.callback?(error: nil)
+//                    }
                     frameCallback(hasMore: false, error: nil)
                 }
             }
@@ -505,7 +530,11 @@ public class WSMessageWriter
             let isFinalFrame = remaining <= maxFrameSize
             let realOpcode = isFirstFrame ? opcode : WSFrame.Opcode.ContinuationFrame
             writer.start(realOpcode, frameLength: length, isFinal: isFinalFrame, maskingKey: maskingKey) { (frame, error) -> Void in
-                self.source.write(writer, length: length, completion: { (error) -> Void in
+                if error != nil {
+                    frameCallback(hasMore: false, error: error)
+                    return
+                }
+                self.source.write(writer, length: length) { (error) in
                     let endReached = (error as? IOErrorType) == IOErrorType.EndReached
                     if error == nil || endReached
                     {
@@ -517,7 +546,9 @@ public class WSMessageWriter
                             if !self.calculateLengths()
                             {
                                 // this request is finished so call the callback and be done with it
-                                self.callback?(error: nil)
+//                                CoreFoundationRunLoop.currentRunLoop().enqueue{ () -> Void in
+                                    self.callback?(error: nil)
+//                                }
                                 frameCallback(hasMore: false, error: nil)
                             }
                         } else
@@ -527,7 +558,7 @@ public class WSMessageWriter
                     } else {
                         frameCallback(hasMore: false, error: error)
                     }
-                })
+                }
             }
         }
     }

@@ -10,12 +10,12 @@ import SwiftIO
 
 public typealias WSCallback = (message: WSMessage) -> Void
 
-/**
- * A message read/write request that is queued and processed FIFO.
- */
-private class WSMessageRequest
+public protocol WSConnectionDelegate
 {
-//    var currentFrame : WSFrame
+    /**
+     * Connection was closed.
+     */
+    func connectionClosed(connection: WSConnection)
 }
 
 public protocol WSConnectionHandler
@@ -43,6 +43,7 @@ public class WSConnection
     public typealias ClosedCallback = Void -> Void
     public typealias MessageCallback = (message: WSMessage) -> Void
 
+    var delegate : WSConnectionDelegate?
     private var frameReader: WSFrameReader
     private var messageReader : WSMessageReader
     private var frameWriter: WSFrameWriter
@@ -59,13 +60,13 @@ public class WSConnection
         self.messageWriter = WSMessageWriter(frameWriter)
 
         messageReader.onClosed = {
-            self.onClosed?()
+            self.connectionClosed()
         }
         messageReader.onMessage = {(message) in
             self.onMessage?(message: message)
         }
         messageWriter.onClosed = {
-            self.onClosed?()
+            self.connectionClosed()
         }
 
         start()
@@ -96,5 +97,11 @@ public class WSConnection
     public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: IOCallback?)
     {
         self.messageReader.read(message, buffer: buffer, length: length, callback: callback)
+    }
+    
+    private func connectionClosed()
+    {
+        self.delegate?.connectionClosed(self)
+        self.onClosed?()
     }
 }

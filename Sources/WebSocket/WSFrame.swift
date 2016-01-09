@@ -191,14 +191,14 @@ public class WSFrameReader : WSFrameProcessor
         
         reset()
         
-        func readMaskingKeyAndContinue(callback : FrameStartCallback)
+        func readMaskingKeyAndContinue(error: ErrorType?, _ callback : FrameStartCallback)
         {
-            if !currFrameIsMasked
+            if !currFrameIsMasked || error != nil
             {
                 currFrameMaskingKey = 0
                 currFrameMaskingKeyBytes = [0,0,0,0]
                 state = State.PAYLOAD
-                return callback(frame: self.currentFrame, error: nil)
+                return callback(frame: self.currentFrame, error: error)
             }
             
             self.reader.readUInt32 { (value, error) in
@@ -229,17 +229,17 @@ public class WSFrameReader : WSFrameProcessor
                 // 2 byte payload length
                 self.reader.readUInt16({ (value, error) in
                     self.currFrameLength = LengthType(value)
-                    readMaskingKeyAndContinue(callback)
+                    readMaskingKeyAndContinue(error, callback)
                 })
             } else if self.currFrameLength == 127
             {
                 // 8 byte payload length
                 self.reader.readUInt64({ (value, error) in
                     self.currFrameLength = LengthType(value)
-                    readMaskingKeyAndContinue(callback)
+                    readMaskingKeyAndContinue(error, callback)
                 })
             } else {
-                readMaskingKeyAndContinue(callback)
+                readMaskingKeyAndContinue(error, callback)
             }
         }
     }
@@ -402,7 +402,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
                 writeMaskingKeyAndContinue(callback)
             } else if frameLength <= (1 << 16)  // 32 bit length
             {
-                self.producer.writeUInt32(UInt32(frameLength & 0xffff), callback: { (error) -> Void in
+                self.producer.writeUInt16(UInt16(frameLength & 0xffff), callback: { (error) -> Void in
                     writeMaskingKeyAndContinue(callback)
                 })
             } else // 64 bits

@@ -11,7 +11,7 @@ import SwiftIO
 public let WS_HANDSHAKE_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 public typealias WSHandler = (connection : WSConnection) -> Void
 
-public class WSRequestServer : HttpRequestServer {
+public class WSRequestServer : HttpRequestServer, WSConnectionDelegate {
     var handler : WSHandler
 
     public init(_ handler: WSHandler)
@@ -40,6 +40,8 @@ public class WSRequestServer : HttpRequestServer {
                 response.headers.setValueFor("Sec-WebSocket-Accept", value: base64Encoded)
                 response.writeHeaders()
                 let connection = WSConnection(connection.reader, writer: connection.writer)
+                connections.append(ConnectionWrapper(connection: connection, request: request, response: response))
+                connection.delegate = self
                 handler(connection: connection)
                 return
             }
@@ -70,7 +72,24 @@ public class WSRequestServer : HttpRequestServer {
         return nil
     }
     
-    private func handleWSConnection(connection: WSConnection)
+    private struct ConnectionWrapper
     {
+        var connection: WSConnection
+        var request: HttpRequest
+        var response: HttpResponse
+    }
+    private var connections = [ConnectionWrapper]()
+    
+    public func connectionClosed(connection: WSConnection) {
+        for i in 0 ..< connections.count
+        {
+            if connections[i].connection === connection
+            {
+                let wrapper = connections.removeAtIndex(i)
+                let httpConnection = wrapper.request.connection!
+                httpConnection.delegate?.connectionFinished(httpConnection)
+                return
+            }
+        }
     }
 }
