@@ -2,7 +2,7 @@
 import SwiftIO
 import SwiftHTTP
 
-let MESSAGE_READ_SIZE = 512
+let MESSAGE_READ_SIZE = DEFAULT_MAX_FRAME_SIZE
 
 public extension WSMessage
 {
@@ -42,14 +42,19 @@ public class WSEchoHandler : WSConnectionHandler
     private func processMessage(message: WSMessage)
     {
         let buffer = message.readBuffer
+        if message.extraData("response") == nil
+        {
+            let response = connection?.startMessage(message.messageType)
+            message.setExtraData("response", value: response)
+        }
+        let response = message.extraData("response") as! WSMessage
 
         connection?.read(message, buffer: buffer, length: MESSAGE_READ_SIZE) {(length: LengthType, error: ErrorType?) in
-            let endReached = (error as? IOErrorType) == IOErrorType.EndReached
-            if error == nil || endReached
+            if error == nil
             {
                 let source = BufferPayload(buffer: buffer, length: length)
-                self.connection?.write(message.messageType, maskingKey: 0, source: source, callback: { (error) in
-                    if error != nil && !endReached {
+                self.connection?.write(response, source: source) { (error) in
+                    if error == nil && length > 0 {
                         // process message by doing more reads on the message
                         // or call message.discard() to discard the rest of the
                         // message
@@ -58,8 +63,10 @@ public class WSEchoHandler : WSConnectionHandler
                         // no more data here so this message is complete -
                         // any more reads on this message wont return anything
                         // (and the callback want be called so dont call it)
+                        self.connection?.closeMessage(response) {(error) in
+                        }
                     }
-                })
+                }
             } else
             {
                 // some other error happened

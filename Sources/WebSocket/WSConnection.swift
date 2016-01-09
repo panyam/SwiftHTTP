@@ -86,12 +86,44 @@ public class WSConnection
     }
     
     /**
-     * Adds a message writer to the the queue of writes that
-     * will be handled along with all other writes.
+     * Starts a new message that can be streamed out by the caller.
+     * Once a message is created it can be written to continuosly.
      */
-    public func write(opcode: WSFrame.Opcode, maskingKey: UInt32, source: Payload, callback: CompletionCallback?)
+    public func startMessage(opcode: WSFrame.Opcode) -> WSMessage
     {
-        self.messageWriter.write(opcode, maskingKey: maskingKey, source: source, callback: callback)
+        return self.messageWriter.startMessage(opcode)
+    }
+    
+    /**
+     * Appends more data to a message.
+     */
+    public func write(message: WSMessage, maskingKey: UInt32, source: Payload, isFinal: Bool, callback: CompletionCallback?)
+    {
+        self.messageWriter.write(message, maskingKey: maskingKey, source: source, isFinal: isFinal, callback: callback)
+    }
+    
+    /**
+     * Appends more data to a message.
+     */
+    public func write(message: WSMessage, source: Payload, isFinal: Bool, callback: CompletionCallback?)
+    {
+        self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: isFinal, callback: callback)
+    }
+    
+    /**
+     * Appends more data to a message.
+     */
+    public func write(message: WSMessage, source: Payload, callback: CompletionCallback?)
+    {
+        self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: false, callback: callback)
+    }
+    
+    /**
+     * Closes the message.  This message can no longer be written to.
+     */
+    public func closeMessage(message: WSMessage, callback: CompletionCallback?)
+    {
+        self.messageWriter.closeMessage(message, callback: callback)
     }
     
     public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: IOCallback?)

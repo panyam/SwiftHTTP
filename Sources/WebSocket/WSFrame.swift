@@ -162,9 +162,6 @@ public class WSFrameProcessor
  * The frame reader is the low level reader of all frames and returns raw data
  * from the frames (after unmasking and after stripping out the headers).
  *
- * The way a client would use this is by starting a frame with startFrame
- * and then repeatedly calling read until it returns an EndReached error.
- *
  * If startFrame returns an error then no more frames are available.
  */
 public class WSFrameReader : WSFrameProcessor
@@ -282,16 +279,14 @@ public class WSFrameReader : WSFrameProcessor
         if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
         {
             reset()
-            callback?(length: 0, error: IOErrorType.EndReached)
+            callback?(length: 0, error: nil)
             return
         }
 
         let realLength = min(length, currFrameLength - currFrameSatisfied)
         reader.read(buffer, length: realLength) { (length, error) in
             assert(length <= realLength, "Underlying reader may be broken - gave us too many bytes")
-            let endReached = (error as? IOErrorType) == IOErrorType.EndReached
-            var finalError = error
-            if error == nil || endReached
+            if error == nil
             {
                 self.currFrameSatisfied += LengthType(length)
                 if self.currFrameMaskingKey != 0
@@ -303,14 +298,13 @@ public class WSFrameReader : WSFrameProcessor
                         buffer[i - firstIndex] ^= UInt8(mask)
                     }
                 }
-                if self.currFrameSatisfied >= self.currFrameLength || endReached
+                if self.currFrameSatisfied >= self.currFrameLength
                 {
                     // all the bytes in the frame read so set state to IDLE
-                    finalError = IOErrorType.EndReached
                     self.reset()
                 }
             }
-            callback?(length: length, error: finalError)
+            callback?(length: length, error: error)
         }
     }
 }
@@ -438,7 +432,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         if state != .PAYLOAD
         {
             reset()
-            callback?(length: 0, error: IOErrorType.EndReached)
+            callback?(length: 0, error: nil)
             return
         }
         
@@ -467,21 +461,18 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         let requestedLength = length
         writer.write(buffer, length: length) { (length, error) -> Void in
             assert(length <= requestedLength, "Underlying reader may be broken - gave us too many bytes")
-            let endReached = (error as? IOErrorType) == IOErrorType.EndReached
-            var finalError = error
-            if error == nil || endReached
+            if error == nil
             {
                 self.currFrameSatisfied += LengthType(length)
                 if self.currFrameSatisfied >= self.currFrameLength
                 {
-                    finalError = IOErrorType.EndReached
                     self.reset()
                 } else {
                     // more data left so call write again
                     return self.writeRaw(buffer.advancedBy(length), length: requestedLength - length, callback)
                 }
             }
-            callback?(length: length, error: finalError)
+            callback?(length: length, error: nil)
         }
     }
 }

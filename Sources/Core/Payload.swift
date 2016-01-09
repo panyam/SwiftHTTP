@@ -9,6 +9,7 @@
 import SwiftIO
 
 public typealias PayloadWriteCallback = (error: ErrorType?) -> Void
+
 public protocol Payload
 {
     /**
@@ -31,9 +32,6 @@ public protocol Payload
 
     /**
      * Called to write the next length set of bytes to the underlying channel.
-     * If the source tries to write more than length number of bytes the underlying
-     * writer may throw an EndReached error.  It can however write less than length
-     * number of bytes (eg if it applies compression).
      *
      * A length of 0 indicates to the payload source that it can write as many bytes as it has.
      */
@@ -64,9 +62,8 @@ public class StringPayload : Payload
 
     /**
      * Called to write the next length set of bytes to the underlying channel.
-     * If the source tries to write more than length number of bytes the underlying
-     * writer may throw an EndReached error.  It can however write less than length
-     * number of bytes (eg if it applies compression).
+     *
+     * A length of 0 indicates to the payload source that it can write as many bytes as it has.
      */
     public func write(writer: Writer, length: LengthType, completion: PayloadWriteCallback)
     {
@@ -102,13 +99,13 @@ public class BufferPayload : Payload
     
     /**
      * Called to write the next length set of bytes to the underlying channel.
-     * If the source tries to write more than length number of bytes the underlying
-     * writer may throw an EndReached error.  It can however write less than length
-     * number of bytes (eg if it applies compression).
+     *
+     * A length of 0 indicates to the payload source that it can write as many bytes as it has.
      */
     public func write(writer: Writer, length: LengthType, completion: PayloadWriteCallback)
     {
-        writer.write(buffer, length: LengthType(length)) { (length, error) -> () in
+        writer.write(buffer.advancedBy(offset), length: LengthType(length)) { (length, error) -> () in
+            self.offset += length
             completion(error: error)
         }
     }
@@ -142,9 +139,8 @@ public class FilePayload : Payload
     
     /**
      * Called to write the next length set of bytes to the underlying channel.
-     * If the source tries to write more than length number of bytes the underlying
-     * writer may throw an EndReached error.  It can however write less than length
-     * number of bytes (eg if it applies compression).
+     *
+     * A length of 0 indicates to the payload source that it can write as many bytes as it has.
      */
     public func write(writer: Writer, length: LengthType, completion: PayloadWriteCallback)
     {
