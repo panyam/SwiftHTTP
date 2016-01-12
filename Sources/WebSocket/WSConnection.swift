@@ -25,21 +25,6 @@ public protocol WSConnectionHandler
 
 public class WSConnection
 {
-    private struct WSReadRequest
-    {
-        var message : WSMessage
-        var buffer : ReadBufferType
-        var fully : Bool = false
-        var length : LengthType
-        var satisfied : LengthType = 0
-        var callback : IOCallback?
-        
-        var remaining : LengthType
-        {
-            return length - satisfied
-        }
-    }
-
     public typealias ClosedCallback = Void -> Void
     public typealias MessageCallback = (message: WSMessage) -> Void
 

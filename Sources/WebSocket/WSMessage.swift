@@ -10,7 +10,7 @@ import SwiftIO
 
 let READ_QUEUE_INTERVAL = 1.0
 let WRITE_QUEUE_INTERVAL = 1.0
-public let DEFAULT_MAX_FRAME_SIZE = 8192
+public let DEFAULT_MAX_FRAME_SIZE = DEFAULT_BUFFER_LENGTH
 
 public typealias WSMessageReadCallback = (length: LengthType, endReached: Bool, error: ErrorType?) -> Void
 
@@ -156,13 +156,17 @@ public class WSMessage
             let isFirstFrame = totalFramesWritten == 0
             let isFinalFrame = writeRequest.remaining <= maxFrameSize && writeRequest.isFinalRequest
             let realOpcode = isFirstFrame ? messageType : WSFrame.Opcode.ContinuationFrame
+            print("Started writing next frame header: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
             writer.start(realOpcode, frameLength: length, isFinal: isFinalFrame, maskingKey: writeRequest.maskingKey) { (frame, error) in
+                print("Finished writing next frame header: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
                 if error != nil {
                     self.writeQueue.removeFirst()
                     frameCallback(writeRequest: writeRequest, error: error)
                     return
                 }
+                print("Started writing next frame body: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
                 writeRequest.source.write(writer, length: length) { (error) in
+                    print("Finished writing next frame body: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
                     if error == nil
                     {
                         self.totalFramesWritten += 1
@@ -197,6 +201,8 @@ public class WSMessageReader
 
     /**
      * Information about the current frame being read
+     * Only one frame can be read at a time.  It is upto the extensions
+     * to demux these frames into messages across several channels
      */
     private var currentFrame = WSFrame()    
     private var controlFrameRequest = WSReadRequest(message: nil,
@@ -334,7 +340,9 @@ public class WSMessageReader
 
             let currentBuffer = currReadRequest.buffer.advancedBy(currReadRequest.satisfied)
             let remaining = currReadRequest.remaining
+            print("Starting reading next frame body, Length: \(remaining)")
             reader.read(currentBuffer, length: remaining) { (length, error) in
+                print("Finished reading next frame body, Read Length: \(remaining)")
                 if error == nil
                 {
                     assert(length >= 0, "Length cannot be negative")
@@ -370,11 +378,13 @@ public class WSMessageReader
             }
         }
     }
-    
+
     private func startNextFrame()
     {
         // kick off the reading of the first frame
+        print("Starting reading next frame header")
         self.reader.start { (frame, error) in
+            print("Finished reading next frame header, error: \(error), Type: \(frame?.opcode)")
             if error == nil && frame != nil {
                 self.currentFrame = frame!
                 self.controlFrameRequest.satisfied = 0
@@ -389,6 +399,8 @@ public class WSMessageReader
                         } else {
                             self.continueReading()
                         }
+                    } else {
+                        print("Transport closed")
                     }
                 }
             } else {
@@ -499,7 +511,7 @@ public class WSMessageWriter
      */
     public func startMessage(opcode: WSFrame.Opcode) -> WSMessage
     {
-        assert(normalMessage == nil)
+//        assert(normalMessage == nil)
         currResponseIndex += 1
         normalMessage = WSMessage(type: opcode, id: String(format: "resp:%05d", currResponseIndex))
         return normalMessage!

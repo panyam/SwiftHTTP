@@ -57,7 +57,7 @@ public class HttpConnection : HttpResponseDelegate
         }
     }
 
-    private func parseStartLineAndHeaders(callback: (error : ErrorType?) -> ())
+    private func parseStartLineAndHeaders(callback: CompletionCallback)
     {
         reader.readTillChar(LF) { (str, error) -> Void in
             if error != nil {

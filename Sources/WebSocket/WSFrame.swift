@@ -134,20 +134,6 @@ public class WSFrameProcessor
     
     public var processingPayload : Bool {
         return state == .PAYLOAD
-//        if state != .PAYLOAD
-//        {
-//            return false
-//        }
-//        
-//        if currFrameSatisfied < currFrameLength
-//        {
-//            return true
-//        }
-//        if currFrameSatisfied > 0
-//        {
-//            reset()
-//        }
-//        return false
     }
     
     private func reset()
@@ -224,7 +210,7 @@ public class WSFrameReader : WSFrameProcessor
             self.currFrameOpcode = WSFrame.Opcode(rawValue: UInt8(value & 0x0f))!
             value = value >> 7
             
-            self.currFrameIsFinal = ((value & UInt16(1)) == 1)
+            self.currFrameIsFinal = ((value & 0x01) == 1)
             value = value >> 1
             
             if self.currFrameLength == 126
@@ -402,14 +388,14 @@ public class WSFrameWriter : WSFrameProcessor, Writer
                 writeMaskingKeyAndContinue(callback)
             } else if frameLength <= (1 << 16)  // 32 bit length
             {
-                self.producer.writeUInt16(UInt16(frameLength & 0xffff), callback: { (error) -> Void in
+                self.producer.writeUInt16(UInt16(frameLength & 0xffff)) { (error) -> Void in
                     writeMaskingKeyAndContinue(callback)
-                })
+                }
             } else // 64 bits
             {
-                self.producer.writeUInt64(UInt64(frameLength), callback: { (error) -> Void in
+                self.producer.writeUInt64(UInt64(frameLength)) { (error) -> Void in
                     writeMaskingKeyAndContinue(callback)
-                })
+                }
             }
         }
     }
@@ -478,7 +464,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
                     return self.writeRaw(buffer.advancedBy(length), length: requestedLength - length, callback)
                 }
             }
-            callback?(length: length, error: nil)
+            callback?(length: length, error: error)
         }
     }
 }
