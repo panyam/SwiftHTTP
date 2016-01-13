@@ -206,17 +206,13 @@ public class WSMessageReader
      * to demux these frames into messages across several channels
      */
     private var currentFrame = WSFrame()    
-    private var controlFrameRequest = WSReadRequest(message: nil,
-                                                    buffer: ReadBufferType.alloc(WSFrame.MAX_CONTROL_FRAME_SIZE),
-                                                    fully: true,
-                                                    length: WSFrame.MAX_CONTROL_FRAME_SIZE,
-                                                    satisfied: 0, callback: nil)
     
     /**
      * Holds the outstanding read requests for each message as they are being read.
      * TODO: Make this a dictionary keyed by the channel and/or message id
      */
-    private var readQueue = [WSReadRequest]()
+//    private var readQueue = WSReadRequest()
+    private var currentReadRequest : WSReadRequest?
 
     private var reader : WSFrameReader
     
@@ -271,9 +267,10 @@ public class WSMessageReader
         {
             callback?(length: 0, endReached: true, error: IOErrorType.Closed)
         } else {
+            print("=====   Issueing read request, CurrFrame: \(self.currentFrame), Length: \(length)")
             // queue the request
-            let newRequest = WSReadRequest(message: message, buffer: buffer, fully: fully, length: length, satisfied: 0, callback: callback)
-            readQueue.append(newRequest)
+            assert(currentReadRequest == nil, "A read request is already running.  Make the request in a callback of another request or use promises")
+            currentReadRequest = WSReadRequest(message: message, buffer: buffer, fully: fully, length: length, satisfied: 0, callback: callback)
             continueReading()
         }
     }
@@ -291,58 +288,16 @@ public class WSMessageReader
             startNextFrame()
         }
         
-        if reader.processingPayload
+        // means we have started a frame, whether it is a control frame or not
+        // someone will "read" it.  So if there are no read requests it means
+        // there is eventually bound to be one
+        if reader.processingPayload && currentReadRequest != nil
         {
-            if readQueue.isEmpty && !self.currentFrame.isControlFrame
-            {
-                // then try again in a few milli seconds
-                // TODO: Get the right runloop
-                print("\(NSDate()) - Read queue empty.  Dispatching again later on");
-//                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(READ_QUEUE_INTERVAL) {
-//                    self.continueReading()
-//                }
-                return
-            }
-
-            // reading header so just queue the request
-            // continue reading the current frame
-            var currReadRequest = self.controlFrameRequest
-            if !self.currentFrame.isControlFrame
-            {
-                // then pick the message corresponding to this frame
-                if let readRequest = readQueue.first
-                {
-                    currReadRequest = readRequest
-                }
-                else
-                {
-                    // This can mean two things:
-                    // 1. This is a new frame (only if opcode != continuation) so this requires a new 
-                    //    message to be created and called via the onMessage callback
-                    // 2. An frame for a message that has already been called via the onMessage callback
-                    //    but there are no outstanding read requests for it.  So this requires that
-                    //    we either block until there is a request made for this message or buffer
-                    //    this data and go forward.  For now we will block (as clients can do buffering
-                    //    on their side anyway).
-                    if self.currentFrame.isStartFrame
-                    {
-                        // clear the message queue with EndReached error as there is no more data
-                        // on this message
-                        self.unwindWithError(nil)
-
-                        self.processCurrentNewFrame(nil)
-                    } else {
-                        // otherwise just block and do a read later on
-                    }
-                    self.continueReading()
-                    return
-                }
-            }
-
-            let currentBuffer = currReadRequest.buffer.advancedBy(currReadRequest.satisfied)
-            let remaining = currReadRequest.remaining
+            var theReadRequest = currentReadRequest!
+            let currentBuffer = theReadRequest.buffer.advancedBy(theReadRequest.satisfied)
+            let remaining = theReadRequest.remaining
             print("Starting reading next frame body, Type: \(self.currentFrame.opcode), Remaining: \(remaining)")
-            reader.read(currentBuffer, length: remaining, fully: currReadRequest.fully) { (length, error) in
+            reader.read(currentBuffer, length: remaining, fully: theReadRequest.fully) { (length, error) in
                 print("Finished reading next frame body, Type: \(self.currentFrame.opcode), Error: \(error), Remaining: \(remaining)")
                 if error == nil
                 {
@@ -351,11 +306,11 @@ public class WSMessageReader
 //                    BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
 //                    THE NEXT READ SHOULD NOT GO THROUGH
                     assert(length >= 0, "Length cannot be negative")
-                    currReadRequest.satisfied += length
+                    theReadRequest.satisfied += length
                     if self.currentFrame.isControlFrame
                     {
                         // do nothing - wait till entire frame is processed
-                        if currReadRequest.remaining == 0
+                        if theReadRequest.remaining == 0
                         {
                             // process the frame and start the next frame
                             self.processCurrentNewFrame {(error) in
@@ -366,19 +321,18 @@ public class WSMessageReader
                             self.continueReading()
                         }
                     } else {
-                        self.readQueue.removeFirst()
-                        currReadRequest.callback?(length: currReadRequest.satisfied, endReached: self.reader.remaining == 0, error: error)
-                        if currReadRequest.remaining == 0
+                        self.currentReadRequest = nil
+                        let endReached = self.reader.remaining == 0
+                        theReadRequest.callback?(length: theReadRequest.satisfied, endReached: endReached, error: error)
+                        if theReadRequest.remaining == 0 // || theReadRequest.satisfied ==
                         {
-                            self.unwindWithError(nil)
                             // and go on reading
                             self.continueReading()
                         }
                     }
                 } else {
-                    // we have an error so unwind all queued requests with this error a
-                    // and close connection
-                    self.unwindWithError(error!)
+                    self.currentReadRequest = nil
+                    theReadRequest.callback?(length: 0, endReached: false, error: error)
                 }
             }
         }
@@ -392,20 +346,24 @@ public class WSMessageReader
             print("Finished reading next frame header, error: \(error), Type: \(frame?.opcode), State: \(self.reader.state)")
             if error == nil && frame != nil {
                 self.currentFrame = frame!
-                self.controlFrameRequest.satisfied = 0
-                self.controlFrameRequest.length = self.currentFrame.payloadLength
-                // we have the frame so process it and start the next frame
-                self.processCurrentNewFrame {(error) in
-                    if !self.transportClosed
-                    {
-                        if self.currentFrame.payloadLength == 0
+                if frame?.opcode == WSFrame.Opcode.ContinuationFrame
+                {
+                    // we have a continuation so do not start a new message of any kind
+                    self.continueReading()
+                } else {
+                    // we have the frame so process it and start the next frame
+                    self.processCurrentNewFrame {(error) in
+                        if !self.transportClosed
                         {
-                            self.startNextFrame()
+                            if self.currentFrame.payloadLength == 0
+                            {
+                                self.startNextFrame()
+                            } else {
+                                self.continueReading()
+                            }
                         } else {
-                            self.continueReading()
+                            print("Transport closed")
                         }
-                    } else {
-                        print("Transport closed")
                     }
                 }
             } else {
@@ -436,12 +394,13 @@ public class WSMessageReader
         }
         else if self.currentFrame.isControlFrame
         {
-            if self.currentFrame.opcode == WSFrame.Opcode.CloseFrame
+            if self.currentFrame.opcode == WSFrame.Opcode.CloseFrame || !self.currentFrame.isFinal
             {
                 // close the connection
                 self.readerClosed()
+            } else {
+                self.onControlFrame?(frame: self.currentFrame, completion: callback)
             }
-            self.onControlFrame?(frame: self.currentFrame, completion: callback)
         }
         else if self.currentFrame.opcode.isReserved
         {
@@ -452,24 +411,7 @@ public class WSMessageReader
             let newMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
             // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
             self.onMessage?(message: newMessage)
-            callback?(error: nil)
-        }
-    }
-    
-    /**
-     * Called when a read error occurred so all queued requests now need to be cancelled
-     * with the error.
-     */
-    private func unwindWithError(error: ErrorType?)
-    {
-        self.transportClosed = (error as? IOErrorType) == IOErrorType.Closed
-        while !self.readQueue.isEmpty
-        {
-            if let next = self.readQueue.first
-            {
-                self.readQueue.removeFirst()
-                next.callback?(length: next.satisfied, endReached: false, error: error)
-            }
+//            callback?(error: nil)
         }
     }
 

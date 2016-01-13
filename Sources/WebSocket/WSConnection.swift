@@ -124,24 +124,26 @@ public class WSConnection
         {
             self.connectionClosed()
             completion?(error: nil)
-        } else if frame.opcode == WSFrame.Opcode.PingFrame
+        } else
         {
             // must send back a pong
             let buffer : ReadBufferType = ReadBufferType.alloc(frame.payloadLength)
-
             self.frameReader.read(buffer, length: frame.payloadLength, fully: true) { (length, error) -> Void in
                 if error != nil {
                     completion?(error: error)
                 } else {
-                    print("Ping Frame Length: \(frame.payloadLength), Read: \(length)")
-                    let source = BufferPayload(buffer: buffer, length: length)
-                    let message = self.startMessage(WSFrame.Opcode.PongFrame)
-                    self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
+                    if frame.opcode == WSFrame.Opcode.PingFrame
+                    {
+                        print("Ping Frame Length: \(frame.payloadLength), Read: \(length)")
+                        let source = BufferPayload(buffer: buffer, length: length)
+                        let message = self.startMessage(WSFrame.Opcode.PongFrame)
+                        self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
+                    } else {
+                        // ignore others (but finish their payloads off first!
+                        completion?(error: nil)
+                    }
                 }
             }
-        } else {
-            // ignore others
-            completion?(error: nil)
         }
     }
     
