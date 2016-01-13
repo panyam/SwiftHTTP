@@ -322,7 +322,7 @@ public class WSMessageReader
                         }
                     } else {
                         self.currentReadRequest = nil
-                        let endReached = self.reader.remaining == 0
+                        let endReached = self.reader.remaining == 0 && self.currentFrame.isFinal
                         theReadRequest.callback?(length: theReadRequest.satisfied, endReached: endReached, error: error)
                         if theReadRequest.remaining == 0 // || theReadRequest.satisfied ==
                         {
@@ -394,12 +394,19 @@ public class WSMessageReader
         }
         else if self.currentFrame.isControlFrame
         {
-            if self.currentFrame.opcode == WSFrame.Opcode.CloseFrame || !self.currentFrame.isFinal
+            if !self.currentFrame.isFinal
             {
                 // close the connection
                 self.readerClosed()
             } else {
-                self.onControlFrame?(frame: self.currentFrame, completion: callback)
+                self.onControlFrame?(frame: self.currentFrame) {(error) in
+                    if (self.currentFrame.opcode == WSFrame.Opcode.CloseFrame)
+                    {
+                        self.readerClosed()
+                    } else {
+                        callback?(error: error)
+                    }
+                }
             }
         }
         else if self.currentFrame.opcode.isReserved

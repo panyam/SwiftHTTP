@@ -119,8 +119,7 @@ public class WSConnection
     
     private func handleControlFrame(frame: WSFrame, completion: CompletionCallback?)
     {
-        if frame.opcode == WSFrame.Opcode.CloseFrame ||
-            frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
+        if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
         {
             self.connectionClosed()
             completion?(error: nil)
@@ -132,11 +131,12 @@ public class WSConnection
                 if error != nil {
                     completion?(error: error)
                 } else {
-                    if frame.opcode == WSFrame.Opcode.PingFrame
+                    if frame.opcode == WSFrame.Opcode.PingFrame || frame.opcode == WSFrame.Opcode.CloseFrame
                     {
                         print("Ping Frame Length: \(frame.payloadLength), Read: \(length)")
                         let source = BufferPayload(buffer: buffer, length: length)
-                        let message = self.startMessage(WSFrame.Opcode.PongFrame)
+                        let replyCode = frame.opcode == WSFrame.Opcode.PingFrame ? WSFrame.Opcode.PongFrame : WSFrame.Opcode.CloseFrame
+                        let message = self.startMessage(replyCode)
                         self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
                     } else {
                         // ignore others (but finish their payloads off first!
