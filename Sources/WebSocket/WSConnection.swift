@@ -44,6 +44,7 @@ public class WSConnection
         self.frameWriter = WSFrameWriter(writer)
         self.messageWriter = WSMessageWriter(frameWriter)
 
+        messageReader.onControlFrame = self.handleControlFrame
         messageReader.onClosed = {
             self.connectionClosed()
         }
@@ -111,9 +112,37 @@ public class WSConnection
         self.messageWriter.closeMessage(message, callback: callback)
     }
     
-    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: WSMessageReadCallback?)
+    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, fully: Bool, callback: WSMessageReadCallback?)
     {
-        self.messageReader.read(message, buffer: buffer, length: length, callback: callback)
+        self.messageReader.read(message, buffer: buffer, length: length, fully: fully, callback: callback)
+    }
+    
+    private func handleControlFrame(frame: WSFrame, completion: CompletionCallback?)
+    {
+        if frame.opcode == WSFrame.Opcode.CloseFrame ||
+            frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
+        {
+            self.connectionClosed()
+            completion?(error: nil)
+        } else if frame.opcode == WSFrame.Opcode.PingFrame
+        {
+            // must send back a pong
+            let buffer : ReadBufferType = ReadBufferType.alloc(frame.payloadLength)
+
+            self.frameReader.read(buffer, length: frame.payloadLength, fully: true) { (length, error) -> Void in
+                if error != nil {
+                    completion?(error: error)
+                } else {
+                    print("Ping Frame Length: \(frame.payloadLength), Read: \(length)")
+                    let source = BufferPayload(buffer: buffer, length: length)
+                    let message = self.startMessage(WSFrame.Opcode.PongFrame)
+                    self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
+                }
+            }
+        } else {
+            // ignore others
+            completion?(error: nil)
+        }
     }
     
     private func connectionClosed()

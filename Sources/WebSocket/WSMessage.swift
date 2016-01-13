@@ -194,10 +194,11 @@ public class WSMessageReader
 {
     private var messageCounter = 0
     private var transportClosed = false
-    public typealias ClosedCallback = Void -> Void
+    public typealias ControlFrameCallback = (frame: WSFrame, completion: CompletionCallback?) -> Void
     public typealias MessageCallback = (message: WSMessage) -> Void
     public var onMessage : MessageCallback?
-    public var onClosed : ClosedCallback?
+    public var onControlFrame : ControlFrameCallback?
+    public var onClosed : (Void -> Void)?
 
     /**
      * Information about the current frame being read
@@ -207,7 +208,7 @@ public class WSMessageReader
     private var currentFrame = WSFrame()    
     private var controlFrameRequest = WSReadRequest(message: nil,
                                                     buffer: ReadBufferType.alloc(WSFrame.MAX_CONTROL_FRAME_SIZE),
-                                                    fully: false,
+                                                    fully: true,
                                                     length: WSFrame.MAX_CONTROL_FRAME_SIZE,
                                                     satisfied: 0, callback: nil)
     
@@ -264,14 +265,14 @@ public class WSMessageReader
      * Looks like both cases can be solved with a periodic read that happens in a loop (say every second or so as long as the 
      * read queue is empty)
      */
-    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, callback: WSMessageReadCallback?)
+    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, fully: Bool, callback: WSMessageReadCallback?)
     {
         if transportClosed
         {
             callback?(length: 0, endReached: true, error: IOErrorType.Closed)
         } else {
             // queue the request
-            let newRequest = WSReadRequest(message: message, buffer: buffer, fully: false, length: length, satisfied: 0, callback: callback)
+            let newRequest = WSReadRequest(message: message, buffer: buffer, fully: fully, length: length, satisfied: 0, callback: callback)
             readQueue.append(newRequest)
             continueReading()
         }
@@ -297,9 +298,9 @@ public class WSMessageReader
                 // then try again in a few milli seconds
                 // TODO: Get the right runloop
                 print("\(NSDate()) - Read queue empty.  Dispatching again later on");
-                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(READ_QUEUE_INTERVAL) {
-                    self.continueReading()
-                }
+//                CoreFoundationRunLoop.currentRunLoop().enqueueAfter(READ_QUEUE_INTERVAL) {
+//                    self.continueReading()
+//                }
                 return
             }
 
@@ -340,9 +341,9 @@ public class WSMessageReader
 
             let currentBuffer = currReadRequest.buffer.advancedBy(currReadRequest.satisfied)
             let remaining = currReadRequest.remaining
-            print("Starting reading next frame body, Length: \(remaining)")
-            reader.read(currentBuffer, length: remaining) { (length, error) in
-                print("Finished reading next frame body, Read Length: \(remaining)")
+            print("Starting reading next frame body, Type: \(self.currentFrame.opcode), Remaining: \(remaining)")
+            reader.read(currentBuffer, length: remaining, fully: currReadRequest.fully) { (length, error) in
+                print("Finished reading next frame body, Type: \(self.currentFrame.opcode), Error: \(error), Remaining: \(remaining)")
                 if error == nil
                 {
                     assert(length >= 0, "Length cannot be negative")
@@ -353,7 +354,7 @@ public class WSMessageReader
                         if currReadRequest.remaining == 0
                         {
                             // process the frame and start the next frame
-                            self.processCurrentNewFrame {
+                            self.processCurrentNewFrame {(error) in
                                 self.startNextFrame()
                             }
                         } else {
@@ -382,15 +383,16 @@ public class WSMessageReader
     private func startNextFrame()
     {
         // kick off the reading of the first frame
-        print("Starting reading next frame header")
+        print("Starting reading next frame header, State: \(reader.state)")
         self.reader.start { (frame, error) in
-            print("Finished reading next frame header, error: \(error), Type: \(frame?.opcode)")
+            print("Finished reading next frame header, error: \(error), Type: \(frame?.opcode), State: \(self.reader.state)")
             if error == nil && frame != nil {
                 self.currentFrame = frame!
                 self.controlFrameRequest.satisfied = 0
                 self.controlFrameRequest.length = self.currentFrame.payloadLength
                 // we have the frame so process it and start the next frame
-                self.processCurrentNewFrame {
+                self.processCurrentNewFrame {(error) in
+                    print("Processing frame in here called, closed: \(self.transportClosed), payload length: \(self.currentFrame.payloadLength)")
                     if !self.transportClosed
                     {
                         if self.currentFrame.payloadLength == 0
@@ -419,25 +421,29 @@ public class WSMessageReader
      * This method will only be called when a control frame has
      * finished or if a non-control frame is of size 0
      */
-    private func processCurrentNewFrame(callback : (Void -> Void)?)
+    private func processCurrentNewFrame(callback : CompletionCallback?)
     {
-        if self.currentFrame.isControlFrame
+        if self.currentFrame.reserved1Set || self.currentFrame.reserved2Set || self.currentFrame.reserved3Set
+        {
+            // non 0 reserved bits without negotiated extensions
+            // close the connection
+            self.readerClosed()
+        }
+        else if self.currentFrame.isControlFrame
         {
             if self.currentFrame.opcode == WSFrame.Opcode.CloseFrame
             {
                 // close the connection
                 self.readerClosed()
-            } else {
-                // TODO: process the control frame
-                print("Processing control frame?")
             }
+            self.onControlFrame?(frame: self.currentFrame, completion: callback)
         } else {
             self.messageCounter += 1
             let newMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
             // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
             self.onMessage?(message: newMessage)
+            callback?(error: nil)
         }
-        callback?()
     }
     
     /**
@@ -586,16 +592,6 @@ public class WSMessageWriter
             {
                 if !message.hasMoreFrames
                 {
-//                    // remove the request from the queue as it is done
-//                    if message === self.controlMessage
-//                    {
-//                        self.controlMessage = nil
-//                    } else if message === self.normalMessage
-//                    {
-//                        self.normalMessage = nil
-//                    } else {
-//                        assert(false, "Invalid message found")
-//                    }
                     assert(self.writer.isIdle)
                 }
                 writeRequest?.callback?(error: error)

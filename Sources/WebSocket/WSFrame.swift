@@ -8,7 +8,7 @@
 
 import SwiftIO
 
-public struct WSFrame
+public struct WSFrame : CustomStringConvertible
 {
     public static let MAX_CONTROL_FRAME_SIZE = 125
     public static let DEFAULT_CHANNEL_ID = ""
@@ -48,6 +48,9 @@ public struct WSFrame
     public var channelId : String = DEFAULT_CHANNEL_ID
     public var payloadLength : LengthType = 0
     public var opcode = Opcode.ContinuationFrame
+    public var reserved1Set = false
+    public var reserved2Set = false
+    public var reserved3Set = false
     public var isMasked : Bool = false
     public var isFinal : Bool = false
     public var maskingKey : UInt32 = 0
@@ -70,6 +73,24 @@ public struct WSFrame
     public var isStartFrame : Bool {
         return opcode != .ContinuationFrame
     }
+    
+    mutating public func reset()
+    {
+        channelId = WSFrame.DEFAULT_CHANNEL_ID
+        payloadLength = 0
+        opcode = WSFrame.Opcode.ContinuationFrame
+        reserved1Set = false
+        reserved2Set = false
+        reserved3Set = false
+        isMasked = false
+        isFinal = true
+        maskingKey = 0
+        maskingKeyBytes = [0,0,0,0]
+    }
+    
+    public var description : String {
+        return "FIN: \(isFinal ? 1 : 0), RSVD: (\(reserved1Set ? 1 : 0), \(reserved2Set ? 1 : 0), \(reserved3Set ? 1 : 0)), Opcode: \(String(opcode.rawValue, radix: 2)), Masked: \(isMasked ? 1 : 0), Mask: \(String(maskingKey, radix: 16)), Length: \(payloadLength)"
+    }
 }
 
 public class WSFrameProcessor
@@ -81,33 +102,29 @@ public class WSFrameProcessor
         case PAYLOAD
     }
     var state : State = State.UNSTARTED
-    var currFrameChannelId = WSFrame.DEFAULT_CHANNEL_ID
-    var currFrameLength : LengthType = 0
+    var currFrame = WSFrame(channelId: WSFrame.DEFAULT_CHANNEL_ID,
+        payloadLength: 0,
+        opcode: WSFrame.Opcode.ContinuationFrame,
+        reserved1Set: false,
+        reserved2Set: false,
+        reserved3Set: false,
+        isMasked: false,
+        isFinal: false,
+        maskingKey: 0,
+        maskingKeyBytes: [0,0,0,0])
     var currFrameSatisfied : LengthType = 0
-    var currFrameOpcode = WSFrame.Opcode.ContinuationFrame
-    var currFrameIsMasked : Bool = false
-    var currFrameIsFinal : Bool = false
-    var currFrameMaskingKey : UInt32 = 0
-    var currFrameMaskingKeyBytes :[UInt8] = [0,0,0,0]
     
     public var remaining : LengthType
     {
-        return currFrameLength - currFrameSatisfied
+        return currFrame.payloadLength - currFrameSatisfied
     }
     
     /**
      * The current frame being read
      */
     public var currentFrame : WSFrame {
-        get
-        {
-            return WSFrame(channelId: currFrameChannelId,
-                payloadLength: currFrameLength,
-                opcode: currFrameOpcode,
-                isMasked: currFrameIsMasked,
-                isFinal: currFrameIsFinal,
-                maskingKey: currFrameMaskingKey,
-                maskingKeyBytes: currFrameMaskingKeyBytes)
+        get {
+            return currFrame
         }
     }
     
@@ -117,7 +134,7 @@ public class WSFrameProcessor
 //        {
 //            return true
 //        }
-//        if currFrameSatisfied >= currFrameLength
+//        if currFrameSatisfied >= currFrame.payloadLength
 //        {
 //            if currFrameSatisfied != 0
 //            {
@@ -140,12 +157,7 @@ public class WSFrameProcessor
     {
         state = .UNSTARTED
         currFrameSatisfied = 0
-        currFrameLength = 0
-        currFrameOpcode = WSFrame.Opcode.ContinuationFrame
-        currFrameIsMasked = false
-        currFrameMaskingKey = 0
-        currFrameMaskingKeyBytes = [0,0,0,0]
-        currFrameIsFinal = true
+        currFrame.reset()
     }
 }
 
@@ -182,17 +194,17 @@ public class WSFrameReader : WSFrameProcessor
         
         func readMaskingKeyAndContinue(error: ErrorType?, _ callback : FrameStartCallback)
         {
-            if !currFrameIsMasked || error != nil
+            if !currFrame.isMasked || error != nil
             {
-                currFrameMaskingKey = 0
-                currFrameMaskingKeyBytes = [0,0,0,0]
+                currFrame.maskingKey = 0
+                currFrame.maskingKeyBytes = [0,0,0,0]
                 state = State.PAYLOAD
                 return callback(frame: self.currentFrame, error: error)
             }
             
             self.reader.readUInt32 { (value, error) in
-                self.currFrameMaskingKey = value
-                self.currFrameMaskingKeyBytes = WSFrame.parseMaskingKeyBytes(self.currFrameMaskingKey)
+                self.currFrame.maskingKey = value
+                self.currFrame.maskingKeyBytes = WSFrame.parseMaskingKeyBytes(self.currFrame.maskingKey)
                 self.state = .PAYLOAD
                 callback(frame: self.currentFrame, error: error)
             }
@@ -200,31 +212,40 @@ public class WSFrameReader : WSFrameProcessor
 
         // read type and first length bit
         self.reader.readUInt16 { (var value, error) in
-            self.currFrameLength = LengthType(value & UInt16((1 << 7) - 1))
+            self.currFrame.payloadLength = LengthType(value & UInt16((1 << 7) - 1))
             value = value >> 7
             
-            self.currFrameIsMasked = ((value & UInt16(1)) == 1)
+            self.currFrame.isMasked = ((value & UInt16(1)) == 1)
             value = value >> 1
             
             // TODO: validate opcode types
-            self.currFrameOpcode = WSFrame.Opcode(rawValue: UInt8(value & 0x0f))!
-            value = value >> 7
+            self.currFrame.opcode = WSFrame.Opcode(rawValue: UInt8(value & 0x0f))!
+            value = value >> 4
             
-            self.currFrameIsFinal = ((value & 0x01) == 1)
+            self.currFrame.reserved3Set = ((value & 0x01) == 1)
             value = value >> 1
             
-            if self.currFrameLength == 126
+            self.currFrame.reserved2Set = ((value & 0x1) == 1)
+            value = value >> 1
+            
+            self.currFrame.reserved1Set = ((value & 0x01) == 1)
+            value = value >> 1
+
+            self.currFrame.isFinal = ((value & 0x01) == 1)
+            value = value >> 1
+            
+            if self.currFrame.payloadLength == 126
             {
                 // 2 byte payload length
                 self.reader.readUInt16({ (value, error) in
-                    self.currFrameLength = LengthType(value)
+                    self.currFrame.payloadLength = LengthType(value)
                     readMaskingKeyAndContinue(error, callback)
                 })
-            } else if self.currFrameLength == 127
+            } else if self.currFrame.payloadLength == 127
             {
                 // 8 byte payload length
                 self.reader.readUInt64({ (value, error) in
-                    self.currFrameLength = LengthType(value)
+                    self.currFrame.payloadLength = LengthType(value)
                     readMaskingKeyAndContinue(error, callback)
                 })
             } else {
@@ -234,7 +255,7 @@ public class WSFrameReader : WSFrameProcessor
     }
     
     public var bytesReadable : LengthType {
-        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
+        if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
             reset()
             return 0
@@ -244,7 +265,7 @@ public class WSFrameReader : WSFrameProcessor
     }
     
     public func read() -> (value: UInt8, error: ErrorType?) {
-        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
+        if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
             reset()
             return (0, IOErrorType.Unavailable)
@@ -252,9 +273,9 @@ public class WSFrameReader : WSFrameProcessor
             var (out, error) = reader.read()
             if error == nil
             {
-                if currFrameMaskingKey != 0
+                if currFrame.maskingKey != 0
                 {
-                    let mask = currFrameMaskingKeyBytes[currFrameSatisfied % 4]
+                    let mask = currFrame.maskingKeyBytes[currFrameSatisfied % 4]
                     out ^= UInt8(mask)
                 }
                 currFrameSatisfied++
@@ -266,31 +287,33 @@ public class WSFrameReader : WSFrameProcessor
     /**
      * Called to read the payload in a frame until it exists
      */
-    public func read(buffer : ReadBufferType, length: LengthType, callback : FrameReadCallback?)
+    public func read(buffer : ReadBufferType, length: LengthType, fully: Bool, callback : FrameReadCallback?)
     {
-        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
+        if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
             reset()
             callback?(length: 0, error: nil)
             return
         }
 
-        let realLength = min(length, currFrameLength - currFrameSatisfied)
-        reader.read(buffer, length: realLength) { (length, error) in
+        let realLength = min(length, currFrame.payloadLength - currFrameSatisfied)
+        print("    Started reading underlying frame body, Type: \(self.currFrame.opcode), Length: \(length), Fully: \(fully)")
+        (fully ? reader.readFully : reader.read)(buffer, length: realLength) { (length, error) in
+            print("    Finished reading underlying frame body, Type: \(self.currentFrame.opcode), Error: \(error), Read: \(length)")
             assert(length <= realLength, "Underlying reader may be broken - gave us too many bytes")
             if error == nil
             {
                 self.currFrameSatisfied += LengthType(length)
-                if self.currFrameMaskingKey != 0
+                if self.currFrame.maskingKey != 0
                 {
                     let firstIndex = self.currFrameSatisfied - length
                     for i in firstIndex ..< self.currFrameSatisfied
                     {
-                        let mask = self.currFrameMaskingKeyBytes[i % 4]
+                        let mask = self.currFrame.maskingKeyBytes[i % 4]
                         buffer[i - firstIndex] ^= UInt8(mask)
                     }
                 }
-                if self.currFrameSatisfied >= self.currFrameLength
+                if self.currFrameSatisfied >= self.currFrame.payloadLength
                 {
                     // all the bytes in the frame read so set state to IDLE
                     self.reset()
@@ -340,12 +363,12 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         reset()
         state = .HEADER
         currFrameSatisfied = 0
-        currFrameLength = frameLength
-        currFrameOpcode = opcode
-        currFrameIsMasked = maskingKey != 0
-        currFrameMaskingKey = maskingKey
-        currFrameMaskingKeyBytes = WSFrame.parseMaskingKeyBytes(maskingKey)
-        currFrameIsFinal = isFinal
+        currFrame.payloadLength = frameLength
+        currFrame.opcode = opcode
+        currFrame.isMasked = maskingKey != 0
+        currFrame.maskingKey = maskingKey
+        currFrame.maskingKeyBytes = WSFrame.parseMaskingKeyBytes(maskingKey)
+        currFrame.isFinal = isFinal
 
         var numLengthBytes = 0
         
@@ -370,13 +393,13 @@ public class WSFrameWriter : WSFrameProcessor, Writer
 
             func writeMaskingKeyAndContinue(completion : FrameStartCallback)
             {
-                if !self.currFrameIsMasked
+                if !self.currFrame.isMasked
                 {
                     self.state = .PAYLOAD
                     return completion(frame: self.currentFrame, error: nil)
                 }
                 
-                self.producer.writeUInt32(self.currFrameMaskingKey) { (error) in
+                self.producer.writeUInt32(self.currFrame.maskingKey) { (error) in
                     self.state = .PAYLOAD
                     completion(frame: self.currentFrame, error: error)
                 }
@@ -405,14 +428,14 @@ public class WSFrameWriter : WSFrameProcessor, Writer
     }
     
     public func write(var value: UInt8, _ callback: CompletionCallback?) {
-        if state != .PAYLOAD || currFrameSatisfied >= currFrameLength
+        if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
             reset()
             callback?(error: IOErrorType.Unavailable)
         } else {
-            if currFrameMaskingKey != 0
+            if currFrame.maskingKey != 0
             {
-                let mask = currFrameMaskingKeyBytes[currFrameSatisfied % 4]
+                let mask = currFrame.maskingKeyBytes[currFrameSatisfied % 4]
                 value ^= UInt8(mask)
             }
             currFrameSatisfied++
@@ -428,12 +451,12 @@ public class WSFrameWriter : WSFrameProcessor, Writer
             return
         }
         
-        let realLength = min(length, currFrameLength - currFrameSatisfied)
+        let realLength = min(length, currFrame.payloadLength - currFrameSatisfied)
         var index = currFrameSatisfied % 4
-        if currFrameIsMasked && currFrameMaskingKey != 0
+        if currFrame.isMasked && currFrame.maskingKey != 0
         {
             // mask the data
-            let mask = currFrameMaskingKeyBytes[index]
+            let mask = currFrame.maskingKeyBytes[index]
             for i in 0 ..< realLength
             {
                 buffer[i] = buffer[i] ^ UInt8(mask)
@@ -456,7 +479,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
             if error == nil
             {
                 self.currFrameSatisfied += LengthType(length)
-                if self.currFrameSatisfied >= self.currFrameLength
+                if self.currFrameSatisfied >= self.currFrame.payloadLength
                 {
                     self.reset()
                 } else {
