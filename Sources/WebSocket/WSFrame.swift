@@ -35,6 +35,11 @@ public struct WSFrame : CustomStringConvertible
         public var isControlCode : Bool {
             return self.rawValue >= CloseFrame.rawValue
         }
+        
+        public var isReserved : Bool {
+            return (self.rawValue >= Opcode.ReservedNonControl3.rawValue && self.rawValue <= Opcode.ReservedNonControl7.rawValue) ||
+                (self.rawValue >= Opcode.ReservedControl11.rawValue && self.rawValue <= Opcode.ReservedControl15.rawValue)
+        }
     }
 
     /**
@@ -257,6 +262,10 @@ public class WSFrameReader : WSFrameProcessor
     public var bytesReadable : LengthType {
         if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
+//            AT THIS POINT WE MUST HANDLE A LENGTH == 0 and invoke a "start" as this would indicate that this
+//            FRAME FINISHED.  PROBLEM IS WE SHOULD NOT READ THE NEXT FRAME UNLESS THE CLIENT INVOKES A START AGAIN
+//            BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
+//            THE NEXT READ SHOULD NOT GO THROUGH
             reset()
             return 0
         } else {
@@ -267,6 +276,10 @@ public class WSFrameReader : WSFrameProcessor
     public func read() -> (value: UInt8, error: ErrorType?) {
         if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
+//            AT THIS POINT WE MUST HANDLE A LENGTH == 0 and invoke a "start" as this would indicate that this
+//            FRAME FINISHED.  PROBLEM IS WE SHOULD NOT READ THE NEXT FRAME UNLESS THE CLIENT INVOKES A START AGAIN
+//            BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
+//            THE NEXT READ SHOULD NOT GO THROUGH
             reset()
             return (0, IOErrorType.Unavailable)
         } else {
@@ -291,6 +304,10 @@ public class WSFrameReader : WSFrameProcessor
     {
         if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
+//            AT THIS POINT WE MUST HANDLE A LENGTH == 0 and invoke a "start" as this would indicate that this
+//            FRAME FINISHED.  PROBLEM IS WE SHOULD NOT READ THE NEXT FRAME UNLESS THE CLIENT INVOKES A START AGAIN
+//            BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
+//            THE NEXT READ SHOULD NOT GO THROUGH
             reset()
             callback?(length: 0, error: nil)
             return
@@ -421,10 +438,6 @@ public class WSFrameWriter : WSFrameProcessor, Writer
                 }
             }
         }
-    }
-
-    public func flush(callback: CompletionCallback?) {
-        self.writer.flush(callback)
     }
     
     public func write(var value: UInt8, _ callback: CompletionCallback?) {

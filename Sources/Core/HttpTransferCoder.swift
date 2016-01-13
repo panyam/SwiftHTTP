@@ -25,10 +25,6 @@ public class HttpChunkedWriter : Writer {
         self.writer = writer
     }
 
-    public func flush(callback: CompletionCallback?) {
-        self.writer.flush(callback)
-    }
-
     public func write(value: UInt8, _ callback: CompletionCallback?) {
         assert(false, "Not implemented")
     }

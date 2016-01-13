@@ -346,6 +346,10 @@ public class WSMessageReader
                 print("Finished reading next frame body, Type: \(self.currentFrame.opcode), Error: \(error), Remaining: \(remaining)")
                 if error == nil
                 {
+//                    AT THIS POINT WE MUST HANDLE A LENGTH == 0 and invoke a "start" as this would indicate that this
+//                    FRAME FINISHED.  PROBLEM IS WE SHOULD NOT READ THE NEXT FRAME UNLESS THE CLIENT INVOKES A START AGAIN
+//                    BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
+//                    THE NEXT READ SHOULD NOT GO THROUGH
                     assert(length >= 0, "Length cannot be negative")
                     currReadRequest.satisfied += length
                     if self.currentFrame.isControlFrame
@@ -392,7 +396,6 @@ public class WSMessageReader
                 self.controlFrameRequest.length = self.currentFrame.payloadLength
                 // we have the frame so process it and start the next frame
                 self.processCurrentNewFrame {(error) in
-                    print("Processing frame in here called, closed: \(self.transportClosed), payload length: \(self.currentFrame.payloadLength)")
                     if !self.transportClosed
                     {
                         if self.currentFrame.payloadLength == 0
@@ -423,6 +426,8 @@ public class WSMessageReader
      */
     private func processCurrentNewFrame(callback : CompletionCallback?)
     {
+        print("==================================================================")
+        print("Processing New Frame: \(self.currentFrame)")
         if self.currentFrame.reserved1Set || self.currentFrame.reserved2Set || self.currentFrame.reserved3Set
         {
             // non 0 reserved bits without negotiated extensions
@@ -437,6 +442,11 @@ public class WSMessageReader
                 self.readerClosed()
             }
             self.onControlFrame?(frame: self.currentFrame, completion: callback)
+        }
+        else if self.currentFrame.opcode.isReserved
+        {
+            // close the connection
+            self.readerClosed()
         } else {
             self.messageCounter += 1
             let newMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
