@@ -394,7 +394,7 @@ public class WSMessageReader
         }
         else if self.currentFrame.isControlFrame
         {
-            if !self.currentFrame.isFinal
+            if !self.currentFrame.isFinal || self.currentFrame.payloadLength > 125
             {
                 // close the connection
                 self.readerClosed()
@@ -446,16 +446,10 @@ public class WSMessageWriter
      */
     private var maxFrameSize : Int = DEFAULT_MAX_FRAME_SIZE
     
-    private var currMessageIndex = 0
-    private var currResponseIndex = 0
+    private var currMessageCount = 0
+    private var allMessages = [WSMessage]()
+    private var currentMessage : WSMessage?
     
-    /**
-     * Holds the outstanding read requests for each message as they are being read.
-     * TODO: Make this a dictionary keyed by the channel and/or message id
-     */
-    private var normalMessage : WSMessage?
-    private var controlMessage : WSMessage?
-
     private var writer : WSFrameWriter
     
     public init(_ writer: WSFrameWriter, maxFrameSize: Int)
@@ -476,10 +470,10 @@ public class WSMessageWriter
      */
     public func startMessage(opcode: WSFrame.Opcode) -> WSMessage
     {
-//        assert(normalMessage == nil)
-        currResponseIndex += 1
-        normalMessage = WSMessage(type: opcode, id: String(format: "resp:%05d", currResponseIndex))
-        return normalMessage!
+        currMessageCount += 1
+        let newMessage = WSMessage(type: opcode, id: String(format: "msg:%05d", currMessageCount))
+        allMessages.append(newMessage)
+        return newMessage
     }
 
     /**
@@ -528,12 +522,20 @@ public class WSMessageWriter
         // (if it is already writing a frame then dont bother it)
         if writer.isIdle
         {
-            if controlMessage != nil
+            if currentMessage != nil
             {
-                sendNextFrame(controlMessage!)
-            } else if normalMessage != nil
-            {
-                sendNextFrame(normalMessage!)
+                sendNextFrame(currentMessage!)
+            } else {
+                // pick a message which has messages
+                for message in allMessages
+                {
+                    if !message.writeQueue.isEmpty
+                    {
+                        currentMessage = message
+                        continueWriting()
+                        return
+                    }
+                }
             }
         }
     }
@@ -551,6 +553,7 @@ public class WSMessageWriter
             {
                 if !message.hasMoreFrames
                 {
+                    self.currentMessage = nil
                     assert(self.writer.isIdle)
                 }
                 writeRequest?.callback?(error: error)

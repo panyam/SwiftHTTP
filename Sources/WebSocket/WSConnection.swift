@@ -125,7 +125,6 @@ public class WSConnection
             completion?(error: nil)
         } else
         {
-            // must send back a pong
             let buffer : ReadBufferType = ReadBufferType.alloc(frame.payloadLength)
             self.frameReader.read(buffer, length: frame.payloadLength, fully: true) { (length, error) -> Void in
                 if error != nil {
@@ -139,7 +138,7 @@ public class WSConnection
                         let message = self.startMessage(replyCode)
                         self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
                     } else {
-                        // ignore others (but finish their payloads off first!
+                        // ignore others (but finish their payloads off first)!
                         completion?(error: nil)
                     }
                 }
