@@ -132,7 +132,15 @@ public class WSConnection
                 } else {
                     if frame.opcode == WSFrame.Opcode.PingFrame || frame.opcode == WSFrame.Opcode.CloseFrame
                     {
-                        print("Ping Frame Length: \(frame.payloadLength), Read: \(length)")
+                        print("\n\nControl Frame Length: \(frame.payloadLength), Read: \(length)")
+                        if let asciiString = NSString(data: NSData(bytes: buffer, length: length), encoding: NSASCIIStringEncoding)
+                        {
+                            print("Received ASCII payload: \(asciiString)")
+                        }
+                        else if let utf8String = NSString(data: NSData(bytes: buffer, length: length), encoding: NSUTF8StringEncoding)
+                        {
+                            print("Received UTF8 payload: \(utf8String)")
+                        }
                         let source = BufferPayload(buffer: buffer, length: length)
                         let replyCode = frame.opcode == WSFrame.Opcode.PingFrame ? WSFrame.Opcode.PongFrame : WSFrame.Opcode.CloseFrame
                         let message = self.startMessage(replyCode)

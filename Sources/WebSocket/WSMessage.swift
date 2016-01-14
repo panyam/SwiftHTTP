@@ -26,6 +26,7 @@ public class WSMessage
      */
     var messageId : String = ""
     
+    var totalFramesRead = 0
     var totalFramesWritten = 0
 
     /**
@@ -267,7 +268,7 @@ public class WSMessageReader
         {
             callback?(length: 0, endReached: true, error: IOErrorType.Closed)
         } else {
-            print("=====   Issueing read request, CurrFrame: \(self.currentFrame), Length: \(length)")
+            print("\n\n=====   Issueing read request, CurrFrame: \(self.currentFrame), Length: \(length)")
             // queue the request
             assert(currentReadRequest == nil, "A read request is already running.  Make the request in a callback of another request or use promises")
             currentReadRequest = WSReadRequest(message: message, buffer: buffer, fully: fully, length: length, satisfied: 0, callback: callback)
@@ -349,6 +350,8 @@ public class WSMessageReader
                 if frame?.opcode == WSFrame.Opcode.ContinuationFrame
                 {
                     // we have a continuation so do not start a new message of any kind
+                    // unless ofcourse this is the first message in the batch then close 
+                    // as first message cannot be a continuation frame
                     self.continueReading()
                 } else {
                     // we have the frame so process it and start the next frame
@@ -386,7 +389,7 @@ public class WSMessageReader
     {
         print("==================================================================")
         print("Processing New Frame: \(self.currentFrame)")
-        if self.currentFrame.reserved1Set || self.currentFrame.reserved2Set || self.currentFrame.reserved3Set
+        if self.currentFrame.reserved1Set || self.currentFrame.reserved2Set || self.currentFrame.reserved3Set || self.currentFrame.opcode == WSFrame.Opcode.ContinuationFrame
         {
             // non 0 reserved bits without negotiated extensions
             // close the connection
