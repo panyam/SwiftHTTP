@@ -111,6 +111,7 @@ public class WSConnection
     public func closeMessage(message: WSMessage, callback: CompletionCallback?)
     {
         self.messageWriter.closeMessage(message, callback: callback)
+        self.messageReader.continueReading()
     }
     
     public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, fully: Bool, callback: WSMessageReadCallback?)

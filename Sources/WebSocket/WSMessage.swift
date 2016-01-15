@@ -136,9 +136,19 @@ public class WSMessage
         }
     }
     
+    private func popWriteRequest(writeRequest : WriteRequest)
+    {
+        assert(self.writeQueue.isEmpty || self.writeQueue.first === writeRequest)
+        if !self.writeQueue.isEmpty
+        {
+            self.writeQueue.removeFirst()
+        }
+    }
+    
     func writeNextFrame(writer: WSFrameWriter, maxFrameSize: Int, frameCallback : (writeRequest: WriteRequest?, error: ErrorType?) -> Void)
     {
         assert(writer.isIdle, "Writer MUST be idle when this method is called.  Later on we could just skip this instead of asserting")
+        
         // writer is idle so start the frame
         if let writeRequest = self.writeQueue.first
         {
@@ -147,10 +157,7 @@ public class WSMessage
                 // first time we are dealing with this frame so do a bit of book keeping
                 if !writeRequest.calculateLengths()
                 {
-                    if self.writeQueue.first === writeRequest
-                    {
-                        self.writeQueue.removeFirst()
-                    }
+                    popWriteRequest(writeRequest)
                     frameCallback(writeRequest: writeRequest, error: nil)
                     return
                 }
@@ -164,10 +171,7 @@ public class WSMessage
             writer.start(realOpcode, frameLength: length, isFinal: isFinalFrame, maskingKey: writeRequest.maskingKey) { (frame, error) in
                 Log.debug("Finished writing next frame header: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
                 if error != nil {
-                    if self.writeQueue.first === writeRequest
-                    {
-                        self.writeQueue.removeFirst()
-                    }
+                    self.popWriteRequest(writeRequest)
                     frameCallback(writeRequest: writeRequest, error: error)
                     return
                 }
@@ -185,10 +189,7 @@ public class WSMessage
                             // first time we are dealing with this frame so do a bit of book keeping
                             if !writeRequest.calculateLengths()
                             {
-                                if self.writeQueue.first === writeRequest
-                                {
-                                    self.writeQueue.removeFirst()
-                                }
+                                self.popWriteRequest(writeRequest)
                                 frameCallback(writeRequest: writeRequest, error: nil)
                                 return
                             }
@@ -290,7 +291,7 @@ public class WSMessageReader
     /**
      * This method is the main "scheduler" loop of the reader.
      */
-    private func continueReading()
+    func continueReading()
     {
         // now see what to do based on the reader state
         // TODO: ensure a single loop/queue
@@ -342,11 +343,6 @@ public class WSMessageReader
                             self.currentMessage = nil
                         }
                         theReadRequest.callback?(length: theReadRequest.satisfied, endReached: endReached, error: error)
-                        if theReadRequest.remaining == 0 // || theReadRequest.satisfied ==
-                        {
-                            // and go on reading
-                            self.continueReading()
-                        }
                     }
                 } else {
                     self.currentReadRequest = nil
@@ -434,10 +430,16 @@ public class WSMessageReader
                 callback?(error: nil)
             }
         } else {
-            self.messageCounter += 1
-            currentMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
-            // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
-            self.onMessage?(message: currentMessage!)
+            if currentMessage != nil
+            {
+                // we already have a message so drop this
+                self.readerClosed()
+            } else {
+                self.messageCounter += 1
+                currentMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
+                // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
+                self.onMessage?(message: currentMessage!)
+            }
         }
     }
 
