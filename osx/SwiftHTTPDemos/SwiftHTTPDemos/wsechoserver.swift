@@ -54,7 +54,7 @@ public class WSEchoHandler : WSConnectionHandler
             {
                 let source = BufferPayload(buffer: buffer, length: length)
                 self.connection?.write(response, source: source, isFinal: endReached) { (error) in
-                    if error == nil && length > 0 {
+                    if error == nil && !endReached {
                         // process message by doing more reads on the message
                         // or call message.discard() to discard the rest of the
                         // message

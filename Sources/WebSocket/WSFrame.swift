@@ -262,10 +262,6 @@ public class WSFrameReader : WSFrameProcessor
     public var bytesReadable : LengthType {
         if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
-//            AT THIS POINT WE MUST HANDLE A LENGTH == 0 and invoke a "start" as this would indicate that this
-//            FRAME FINISHED.  PROBLEM IS WE SHOULD NOT READ THE NEXT FRAME UNLESS THE CLIENT INVOKES A START AGAIN
-//            BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
-//            THE NEXT READ SHOULD NOT GO THROUGH
             reset()
             return 0
         } else {
@@ -276,10 +272,6 @@ public class WSFrameReader : WSFrameProcessor
     public func read() -> (value: UInt8, error: ErrorType?) {
         if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
-//            AT THIS POINT WE MUST HANDLE A LENGTH == 0 and invoke a "start" as this would indicate that this
-//            FRAME FINISHED.  PROBLEM IS WE SHOULD NOT READ THE NEXT FRAME UNLESS THE CLIENT INVOKES A START AGAIN
-//            BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
-//            THE NEXT READ SHOULD NOT GO THROUGH
             reset()
             return (0, IOErrorType.Unavailable)
         } else {
@@ -304,19 +296,15 @@ public class WSFrameReader : WSFrameProcessor
     {
         if state != .PAYLOAD || currFrameSatisfied >= currFrame.payloadLength
         {
-//            AT THIS POINT WE MUST HANDLE A LENGTH == 0 and invoke a "start" as this would indicate that this
-//            FRAME FINISHED.  PROBLEM IS WE SHOULD NOT READ THE NEXT FRAME UNLESS THE CLIENT INVOKES A START AGAIN
-//            BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
-//            THE NEXT READ SHOULD NOT GO THROUGH
             reset()
             callback?(length: 0, error: nil)
             return
         }
 
         let realLength = min(length, currFrame.payloadLength - currFrameSatisfied)
-        Log.debug("    Started reading underlying frame body, Type: \(self.currFrame.opcode), Length: \(length), Fully: \(fully)")
+//        Log.debug("    Started reading underlying frame body, Type: \(self.currFrame.opcode), Length: \(length), Fully: \(fully)")
         (fully ? reader.readFully : reader.read)(buffer, length: realLength) { (length, error) in
-            Log.debug("    Finished reading underlying frame body, Type: \(self.currentFrame.opcode), Error: \(error), Read: \(length)")
+//            Log.debug("    Finished reading underlying frame body, Type: \(self.currentFrame.opcode), Error: \(error), Read: \(length)")
             assert(length <= realLength, "Underlying reader may be broken - gave us too many bytes")
             if error == nil
             {

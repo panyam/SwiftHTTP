@@ -167,18 +167,18 @@ public class WSMessage
             let isFirstFrame = totalFramesWritten == 0
             let isFinalFrame = writeRequest.remaining <= maxFrameSize && writeRequest.isFinalRequest
             let realOpcode = isFirstFrame ? messageType : WSFrame.Opcode.ContinuationFrame
-            Log.debug("Started writing next frame header: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
+//            Log.debug("Started writing next frame header: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
             writer.start(realOpcode, frameLength: length, isFinal: isFinalFrame, maskingKey: writeRequest.maskingKey) { (frame, error) in
-                Log.debug("Finished writing next frame header: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
+//                Log.debug("Finished writing next frame header: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
                 if error != nil {
                     self.popWriteRequest(writeRequest)
                     frameCallback(writeRequest: writeRequest, error: error)
                     return
                 }
-                Log.debug("Started writing next frame body: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
+//                Log.debug("Started writing next frame body: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
                 writeRequest.source.write(writer, length: length) { (error) in
-                    Log.debug("Finished writing next frame body: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
-                    Log.debug("-----------------------------------------------------------------------------------------------\n")
+//                    Log.debug("Finished writing next frame body: \(realOpcode), Length: \(length), isFinal: \(isFinalFrame)")
+//                    Log.debug("-----------------------------------------------------------------------------------------------\n")
                     if error == nil
                     {
                         self.totalFramesWritten += 1
@@ -280,7 +280,6 @@ public class WSMessageReader
         {
             callback?(length: 0, endReached: true, error: IOErrorType.Closed)
         } else {
-            Log.debug("\n\n=====   Issueing read request, CurrFrame: \(self.currentFrame), Length: \(length)")
             // queue the request
             assert(currentReadRequest == nil, "A read request is already running.  Make the request in a callback of another request or use promises")
             currentReadRequest = WSReadRequest(message: message, buffer: buffer, fully: fully, length: length, satisfied: 0, callback: callback)
@@ -309,17 +308,11 @@ public class WSMessageReader
             var theReadRequest = currentReadRequest!
             let currentBuffer = theReadRequest.buffer.advancedBy(theReadRequest.satisfied)
             let remaining = theReadRequest.remaining
-            Log.debug("Message Reader Number of outstanding read requests BEFORE: \(((self.reader.reader as! BufferedReader).reader as! StreamReader).readRequests)")
-            Log.debug("Message Reader Started reading next frame body, Type: \(self.currentFrame.opcode), Remaining: \(remaining)")
+//            Log.debug("Message Reader Started reading next frame body, Type: \(self.currentFrame.opcode), Remaining: \(remaining)")
             reader.read(currentBuffer, length: remaining, fully: theReadRequest.fully) { (length, error) in
-                Log.debug("Finished reading next frame body, Type: \(self.currentFrame.opcode), Error: \(error), Remaining: \(remaining)")
-                Log.debug("Number of outstanding read requests AFTER: \(((self.reader.reader as! BufferedReader).reader as! StreamReader).readRequests)")
+//                Log.debug("Finished reading next frame body, Type: \(self.currentFrame.opcode), Error: \(error), Remaining: \(remaining)")
                 if error == nil
                 {
-//                    AT THIS POINT WE MUST HANDLE A LENGTH == 0 and invoke a "start" as this would indicate that this
-//                    FRAME FINISHED.  PROBLEM IS WE SHOULD NOT READ THE NEXT FRAME UNLESS THE CLIENT INVOKES A START AGAIN
-//                    BECAUSE THE CLIENT COULD BE WRITING/RESPONDING TO SOME DATA IN ANOTHER FRAME AND BEFORE THAT WRITE FINISHES
-//                    THE NEXT READ SHOULD NOT GO THROUGH
                     assert(length >= 0, "Length cannot be negative")
                     theReadRequest.satisfied += length
                     if self.currentFrame.isControlFrame
@@ -356,20 +349,15 @@ public class WSMessageReader
     private func startNextFrame()
     {
         // kick off the reading of the first frame
-        Log.debug("Starting reading next frame header, State: \(reader.state)")
+//        Log.debug("Started reading next frame header, State: \(reader.state)")
         self.reader.start { (frame, error) in
-            Log.debug("Finished reading next frame header, error: \(error), Type: \(frame?.opcode), State: \(self.reader.state)")
+//            Log.debug("Finished reading next frame header, error: \(error), Type: \(frame?.opcode), State: \(self.reader.state)")
             if error == nil && frame != nil {
                 // we have the frame so process it and start the next frame
                 self.processNewFrame(frame!) {(error) in
                     if !self.transportClosed
                     {
-                        if self.currentFrame.payloadLength == 0
-                        {
-                            self.startNextFrame()
-                        } else {
-                            self.continueReading()
-                        }
+                        self.continueReading()
                     } else {
                         Log.debug("Transport closed")
                     }
