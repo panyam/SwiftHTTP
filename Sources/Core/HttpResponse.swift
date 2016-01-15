@@ -93,7 +93,7 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
                 // TODO: Have a CappedWriter in place to ensure no more than totalLength number of bytes have been written.
                 // TODO: Ensure chunked encoding
                 // TODO: Do framing of data if required
-                print("Response written")
+                Log.debug("Response written")
                 self.delegate?.bodyWritten(self, error: error)
             }
         }
@@ -128,11 +128,11 @@ public class HttpResponse : HttpMessage, CustomStringConvertible {
             }
             
             // write the status line first
-            print("===============================")
-            print("Writing headers for connection: \(connection?.identifier)")
+            Log.debug("===============================")
+            Log.debug("Writing headers for connection: \(connection?.identifier)")
             if let writer = self.writer
             {
-                print("\(headers)")
+                Log.debug("\(headers)")
                 writer.writeString("\(httpVersion) \(statusCode) \(reasonPhrase)\(CRLF)")
                 writer.writeString(headers.description)
                 writer.writeString(CRLF)

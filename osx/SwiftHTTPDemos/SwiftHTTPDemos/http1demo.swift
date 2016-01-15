@@ -13,7 +13,7 @@ func testHTTP1Server()
         // 1. Set headers
         // 2. Set the body writer
         // 3. Close the response once it is done with it
-        print("Handling request: \(request.method) \(request.requestTarget)")
+        Log.debug("Handling request: \(request.method) \(request.requestTarget)")
         if request.resourcePath == "/"
         {
             response.headers.forKey("Content-Type", create: true)?.setValue(MimeType.typeForExtension("html"))

@@ -93,6 +93,7 @@
 		F78B5B001C3DF16E0018FEAE /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		F7B1D0C41C21024300DEBD83 /* SwiftIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftIO.framework; path = "../../../Library/Developer/Xcode/DerivedData/SwiftHTTP-agzelxuwcvqtmhgglneebflmmofu/Build/Products/Debug/SwiftIO.framework"; sourceTree = "<group>"; };
 		F7F1303F1C2A1E8200CA528A /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		F7F74C1E1C48CC7E005A5322 /* Log.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Log.framework; path = "../External/Log/build/Debug-iphoneos/Log.framework"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -127,6 +128,7 @@
 		2803102C5113276E6DE0E2DB /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F7F74C1E1C48CC7E005A5322 /* Log.framework */,
 				F78449481C3F5A4100037251 /* libcrypto.0.9.8.dylib */,
 				F78B5B001C3DF16E0018FEAE /* Security.framework */,
 				F78B5AFE1C3DF15E0018FEAE /* libcommonCrypto.tbd */,

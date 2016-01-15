@@ -72,7 +72,8 @@ public class WSConnection
     }
     
     /**
-     * Starts a new message that can be streamed out by the caller.
+     * Starts a new message tha
+     t can be streamed out by the caller.
      * Once a message is created it can be written to continuosly.
      */
     public func startMessage(opcode: WSFrame.Opcode) -> WSMessage
@@ -132,14 +133,15 @@ public class WSConnection
                 } else {
                     if frame.opcode == WSFrame.Opcode.PingFrame || frame.opcode == WSFrame.Opcode.CloseFrame
                     {
-                        print("\n\nControl Frame Length: \(frame.payloadLength), Read: \(length)")
+                        assert(frame.payloadLength == length, "Read fully didnt read fully!")
+                        Log.debug("\n\nControl Frame \(frame.opcode) Length: \(frame.payloadLength)")
                         if let asciiString = NSString(data: NSData(bytes: buffer, length: length), encoding: NSASCIIStringEncoding)
                         {
-                            print("Received ASCII payload: \(asciiString)")
+                            Log.debug("Received ASCII payload: \(asciiString)")
                         }
                         else if let utf8String = NSString(data: NSData(bytes: buffer, length: length), encoding: NSUTF8StringEncoding)
                         {
-                            print("Received UTF8 payload: \(utf8String)")
+                            Log.debug("Received UTF8 payload: \(utf8String)")
                         }
                         let source = BufferPayload(buffer: buffer, length: length)
                         let replyCode = frame.opcode == WSFrame.Opcode.PingFrame ? WSFrame.Opcode.PongFrame : WSFrame.Opcode.CloseFrame

@@ -176,7 +176,7 @@ public class WSFrameReader : WSFrameProcessor
 {
     public typealias FrameStartCallback = (frame: WSFrame?, error : ErrorType?) -> Void
     public typealias FrameReadCallback = IOCallback
-    private var reader : Reader
+    public var reader : Reader
     
     public init(_ reader : Reader)
     {
@@ -314,9 +314,9 @@ public class WSFrameReader : WSFrameProcessor
         }
 
         let realLength = min(length, currFrame.payloadLength - currFrameSatisfied)
-        print("    Started reading underlying frame body, Type: \(self.currFrame.opcode), Length: \(length), Fully: \(fully)")
+        Log.debug("    Started reading underlying frame body, Type: \(self.currFrame.opcode), Length: \(length), Fully: \(fully)")
         (fully ? reader.readFully : reader.read)(buffer, length: realLength) { (length, error) in
-            print("    Finished reading underlying frame body, Type: \(self.currentFrame.opcode), Error: \(error), Read: \(length)")
+            Log.debug("    Finished reading underlying frame body, Type: \(self.currentFrame.opcode), Error: \(error), Read: \(length)")
             assert(length <= realLength, "Underlying reader may be broken - gave us too many bytes")
             if error == nil
             {

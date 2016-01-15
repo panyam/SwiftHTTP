@@ -44,14 +44,14 @@ public class HttpConnection : HttpResponseDelegate
         currentResponse = HttpResponse(self)
         parseStartLineAndHeaders { (error) -> () in
             // ready to read body and handle it!
-            print("Headers received...")
+            Log.debug("Headers received...")
             if self.requestHandler == nil {
                 // send a 404
                 self.currentResponse.setStatus(HttpStatusCode.NotFound)
                 self.currentResponse.close()
             } else {
-                print("Connection: \(self.identifier)")
-                print("Headers: \(self.currentRequest)")
+                Log.debug("Connection: \(self.identifier)")
+                Log.debug("Headers: \(self.currentRequest)")
                 self.requestHandler?(request: self.currentRequest, response: self.currentResponse)
             }
         }
