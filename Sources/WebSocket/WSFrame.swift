@@ -382,7 +382,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         if frameLength <= 125
         {
             opcodeAndLength1 |= (frameLength & 0xff)
-        } else if frameLength <= (1 << 16)
+        } else if frameLength < (1 << 16)
         {
             opcodeAndLength1 |= (126 & 0xff)
         } else // 64 bits
@@ -414,7 +414,7 @@ public class WSFrameWriter : WSFrameProcessor, Writer
             {
                 // go to masking key
                 writeMaskingKeyAndContinue(callback)
-            } else if frameLength <= (1 << 16)  // 32 bit length
+            } else if frameLength < (1 << 16)  // 32 bit length
             {
                 self.producer.writeUInt16(UInt16(frameLength & 0xffff)) { (error) -> Void in
                     writeMaskingKeyAndContinue(callback)

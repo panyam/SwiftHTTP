@@ -136,13 +136,13 @@ public class WSConnection
                     {
                         assert(frame.payloadLength == length, "Read fully didnt read fully!")
                         Log.debug("\n\nControl Frame \(frame.opcode) Length: \(frame.payloadLength)")
-                        if let asciiString = NSString(data: NSData(bytes: buffer, length: length), encoding: NSASCIIStringEncoding)
-                        {
-                            Log.debug("Received ASCII payload: \(asciiString)")
-                        }
-                        else if let utf8String = NSString(data: NSData(bytes: buffer, length: length), encoding: NSUTF8StringEncoding)
+                        if let utf8String = NSString(data: NSData(bytes: buffer, length: length), encoding: NSUTF8StringEncoding)
                         {
                             Log.debug("Received UTF8 payload: \(utf8String)")
+                        }
+                        else if let asciiString = NSString(data: NSData(bytes: buffer, length: length), encoding: NSASCIIStringEncoding)
+                        {
+                            Log.debug("Received ASCII payload: \(asciiString)")
                         }
                         let source = BufferPayload(buffer: buffer, length: length)
                         let replyCode = frame.opcode == WSFrame.Opcode.PingFrame ? WSFrame.Opcode.PongFrame : WSFrame.Opcode.CloseFrame
