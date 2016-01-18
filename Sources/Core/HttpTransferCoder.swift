@@ -20,6 +20,11 @@ public class HttpChunkedWriter : Writer {
         return writer.stream
     }
     
+    public func flush()
+    {
+        writer.flush()
+    }
+
     public init (writer: Writer)
     {
         self.writer = writer

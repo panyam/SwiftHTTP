@@ -354,6 +354,11 @@ public class WSFrameWriter : WSFrameProcessor, Writer
         self.producer = DataWriter(writer)
     }
     
+    public func flush()
+    {
+        writer.flush()
+    }
+    
     /**
      * Called to start a new frame.  If this is called when a frame has already been
      * started, then nothing happens.

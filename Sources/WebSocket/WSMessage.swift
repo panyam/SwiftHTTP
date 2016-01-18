@@ -380,7 +380,7 @@ public class WSMessageReader
      */
     private func processNewFrame(frame: WSFrame, callback : CompletionCallback?)
     {
-        Log.debug("Processing New Frame: \(self.currentFrame)")
+//        Log.debug("Processing New Frame: \(self.currentFrame)")
         self.currentFrame = frame
         if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
         {

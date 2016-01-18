@@ -36,7 +36,8 @@ public class WSConnection
 
     public var onMessage : MessageCallback?
     public var onClosed : ClosedCallback?
-    
+    private var controlFrameBuffer : ReadBufferType = ReadBufferType.alloc(256)
+
     public init(_ reader: Reader, writer: Writer)
     {
         self.frameReader = WSFrameReader(reader)
@@ -127,8 +128,7 @@ public class WSConnection
             completion?(error: nil)
         } else
         {
-            let buffer : ReadBufferType = ReadBufferType.alloc(frame.payloadLength)
-            self.frameReader.read(buffer, length: frame.payloadLength, fully: true) { (length, error) -> Void in
+            self.frameReader.read(controlFrameBuffer, length: frame.payloadLength, fully: true) { (length, error) -> Void in
                 if error != nil {
                     completion?(error: error)
                 } else {
@@ -136,15 +136,15 @@ public class WSConnection
                     {
                         assert(frame.payloadLength == length, "Read fully didnt read fully!")
                         Log.debug("\n\nControl Frame \(frame.opcode) Length: \(frame.payloadLength)")
-                        if let utf8String = NSString(data: NSData(bytes: buffer, length: length), encoding: NSUTF8StringEncoding)
+                        if let utf8String = NSString(data: NSData(bytes: self.controlFrameBuffer, length: length), encoding: NSUTF8StringEncoding)
                         {
                             Log.debug("Received UTF8 payload: \(utf8String)")
                         }
-                        else if let asciiString = NSString(data: NSData(bytes: buffer, length: length), encoding: NSASCIIStringEncoding)
+                        else if let asciiString = NSString(data: NSData(bytes: self.controlFrameBuffer, length: length), encoding: NSASCIIStringEncoding)
                         {
                             Log.debug("Received ASCII payload: \(asciiString)")
                         }
-                        let source = BufferPayload(buffer: buffer, length: length)
+                        let source = BufferPayload(buffer: self.controlFrameBuffer, length: length)
                         let replyCode = frame.opcode == WSFrame.Opcode.PingFrame ? WSFrame.Opcode.PongFrame : WSFrame.Opcode.CloseFrame
                         let message = self.startMessage(replyCode)
                         self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
