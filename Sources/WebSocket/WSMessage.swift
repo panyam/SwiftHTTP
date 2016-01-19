@@ -287,6 +287,7 @@ public class WSMessageReader
         }
     }
     
+    private var frameReadStarted = false
     /**
      * This method is the main "scheduler" loop of the reader.
      */
@@ -303,13 +304,16 @@ public class WSMessageReader
         // means we have started a frame, whether it is a control frame or not
         // someone will "read" it.  So if there are no read requests it means
         // there is eventually bound to be one
-        if reader.processingPayload && currentReadRequest != nil
+        if reader.processingPayload && currentReadRequest != nil && !frameReadStarted
         {
+            assert(!frameReadStarted)
+            frameReadStarted = true
             var theReadRequest = currentReadRequest!
             let currentBuffer = theReadRequest.buffer.advancedBy(theReadRequest.satisfied)
             let remaining = theReadRequest.remaining
 //            Log.debug("Message Reader Started reading next frame body, Type: \(self.currentFrame.opcode), Remaining: \(remaining)")
             reader.read(currentBuffer, length: remaining, fully: theReadRequest.fully) { (length, error) in
+                self.frameReadStarted = false
 //                Log.debug("Finished reading next frame body, Type: \(self.currentFrame.opcode), Error: \(error), Remaining: \(remaining)")
                 if error == nil
                 {
@@ -374,6 +378,7 @@ public class WSMessageReader
         self.onClosed?()
     }
     
+    var frameCount = 0
     /**
      * This method will only be called when a control frame has
      * finished or if a non-control frame is of size 0
@@ -381,6 +386,7 @@ public class WSMessageReader
     private func processNewFrame(frame: WSFrame, callback : CompletionCallback?)
     {
 //        Log.debug("Processing New Frame: \(self.currentFrame)")
+        frameCount += 1
         self.currentFrame = frame
         if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
         {
