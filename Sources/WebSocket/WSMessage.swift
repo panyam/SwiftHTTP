@@ -204,6 +204,7 @@ public class WSMessage
 
 public class WSMessageReader
 {
+    public var validateUtf8 = true
     private var messageCounter = 0
     private var transportClosed = false
     public typealias ControlFrameCallback = (frame: WSFrame, completion: CompletionCallback?) -> Void
