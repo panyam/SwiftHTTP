@@ -209,6 +209,7 @@ public class WSMessageReader
     private var utf8CurrSize = 0
     // Index of the current char we are validating
     private var utf8CurrIndex = 0
+    private var utf8CurrValue : UInt = 0
     
     private var messageCounter = 0
     private var transportClosed = false
@@ -368,7 +369,9 @@ public class WSMessageReader
     private func validateUtf8Buffer(buffer: ReadBufferType, _ length: LengthType, _ endReached: Bool) -> Bool
     {
         for i in 0 ..< length {
+            print("\(String(buffer[i], radix: 16)) -> \(String(buffer[i], radix: 2))")
             if utf8CurrIndex == 0 {
+                utf8CurrValue = UInt(buffer[i]) & 0xff
                 // we are at the first byte so get character size
                 if buffer[i] & 0x80 == 0 {
                     // do nothing go to the next char
@@ -387,9 +390,18 @@ public class WSMessageReader
                 if ((buffer[i] >> 6) & 0xff) != 0x02 {     // 10
                     return false
                 }
+                utf8CurrValue = (utf8CurrValue << 8) | (UInt(buffer[i]) & 0xff)
                 utf8CurrIndex += 1
                 if utf8CurrIndex >= utf8CurrSize {
+                    // check for invalid sequences
+                    if utf8CurrSize == 2 {
+                        if utf8CurrValue == 0xc080
+                        {
+                            return false
+                        }
+                    }
                     utf8CurrIndex = 0
+                    utf8CurrValue = 0
                 }
             }
         }
