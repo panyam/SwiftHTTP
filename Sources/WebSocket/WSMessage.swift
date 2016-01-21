@@ -205,11 +205,7 @@ public class WSMessage
 public class WSMessageReader
 {
     public var validateUtf8 = true
-    // Size of the current char.  The first byte in the sequence dictates how many bytes are to follow
-    private var utf8CurrSize = 0
-    // Index of the current char we are validating
-    private var utf8CurrIndex = 0
-    private var utf8CurrValue : UInt = 0
+    public var utf8Validator = Utf8Validator()
     
     private var messageCounter = 0
     private var transportClosed = false
@@ -343,7 +339,8 @@ public class WSMessageReader
                         let endReached = self.reader.remaining == 0 && self.currentFrame.isFinal
                         if self.currentFrame.opcode == WSFrame.Opcode.TextFrame && self.validateUtf8
                         {
-                            let utf8Validated = self.validateUtf8Buffer(currentBuffer, length, endReached)
+                            let utf8Validated = self.utf8Validator.validate(currentBuffer, length) &&
+                                                    (!endReached || self.utf8Validator.finish())
                             if !utf8Validated
                             {
                                 self.readerClosed()
@@ -366,50 +363,6 @@ public class WSMessageReader
         }
     }
 
-    private func validateUtf8Buffer(buffer: ReadBufferType, _ length: LengthType, _ endReached: Bool) -> Bool
-    {
-        for i in 0 ..< length {
-            print("\(String(buffer[i], radix: 16)) -> \(String(buffer[i], radix: 2))")
-            if utf8CurrIndex == 0 {
-                utf8CurrValue = UInt(buffer[i]) & 0xff
-                // we are at the first byte so get character size
-                if buffer[i] & 0x80 == 0 {
-                    // do nothing go to the next char
-                    utf8CurrSize = 1
-                } else {
-                    if ((buffer[i] >> 5) & 0xff) == 0x06 {     // 110
-                        utf8CurrSize = 2
-                    } else if ((buffer[i] >> 4) & 0xff) == 0x0E {     // 1110
-                        utf8CurrSize = 3
-                    } else if ((buffer[i] >> 3) & 0xff) == 0x1E {     // 11110
-                        utf8CurrSize = 4
-                    }
-                    utf8CurrIndex += 1
-                }
-            } else {
-                if ((buffer[i] >> 6) & 0xff) != 0x02 {     // 10
-                    return false
-                }
-                utf8CurrValue = (utf8CurrValue << 8) | (UInt(buffer[i]) & 0xff)
-                utf8CurrIndex += 1
-                if utf8CurrIndex >= utf8CurrSize {
-                    // check for invalid sequences
-                    if utf8CurrSize == 2 {
-                        if utf8CurrValue == 0xc080
-                        {
-                            return false
-                        }
-                    }
-                    utf8CurrIndex = 0
-                    utf8CurrValue = 0
-                }
-            }
-        }
-        if endReached {
-            return self.utf8CurrIndex == 0
-        }
-        return true
-    }
     
     private func startNextFrame()
     {
@@ -489,6 +442,8 @@ public class WSMessageReader
                 // we already have a message so drop this
                 self.readerClosed()
             } else {
+                // starting a new message
+                self.utf8Validator.reset()
                 self.messageCounter += 1
                 currentMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
                 // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?

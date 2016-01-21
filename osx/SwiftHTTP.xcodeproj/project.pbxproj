@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		F71DB0BA1C3F4C2300837E18 /* CommonCrypto.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F71DB0B91C3F4C2300837E18 /* CommonCrypto.xcconfig */; };
+		F76D3DA91C50AD5A00929FEC /* Utf8Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76D3DA81C50AD5A00929FEC /* Utf8Validator.swift */; };
+		F76D3DAA1C50AD5A00929FEC /* Utf8Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76D3DA81C50AD5A00929FEC /* Utf8Validator.swift */; };
 		F78449491C3F5A4100037251 /* libcrypto.0.9.8.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F78449481C3F5A4100037251 /* libcrypto.0.9.8.dylib */; };
 		F78B5AC11C3DECC20018FEAE /* SwiftHTTP.h in Headers */ = {isa = PBXBuildFile; fileRef = F78B5AC01C3DECC20018FEAE /* SwiftHTTP.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F78B5AC81C3DECC20018FEAE /* SwiftHTTP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F78B5ABE1C3DECC20018FEAE /* SwiftHTTP.framework */; };
@@ -76,6 +78,7 @@
 		F769F79C1C30E4E900A59A75 /* Base64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Base64.swift; path = Utils/Base64.swift; sourceTree = "<group>"; };
 		F769F79E1C30F21700A59A75 /* HttpStatusCode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpStatusCode.swift; path = ../Sources/Core/HttpStatusCode.swift; sourceTree = "<group>"; };
 		F769F7A01C30F75600A59A75 /* Crypto.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Crypto.swift; path = Utils/Crypto.swift; sourceTree = "<group>"; };
+		F76D3DA81C50AD5A00929FEC /* Utf8Validator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Utf8Validator.swift; path = Utils/Utf8Validator.swift; sourceTree = "<group>"; };
 		F772FDD01C3606D40053646F /* WSConnection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSConnection.swift; sourceTree = "<group>"; };
 		F772FDD11C3606D40053646F /* WSFrame.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSFrame.swift; sourceTree = "<group>"; };
 		F772FDD21C3606D40053646F /* WSHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSHandler.swift; sourceTree = "<group>"; };
@@ -167,6 +170,7 @@
 			children = (
 				F769F79C1C30E4E900A59A75 /* Base64.swift */,
 				F769F7A01C30F75600A59A75 /* Crypto.swift */,
+				F76D3DA81C50AD5A00929FEC /* Utf8Validator.swift */,
 			);
 			name = Utils;
 			sourceTree = "<group>";
@@ -414,6 +418,7 @@
 				F78B5AEC1C3DEE8D0018FEAE /* HttpHeaders.swift in Sources */,
 				F78B5AED1C3DEE8D0018FEAE /* HttpMessage.swift in Sources */,
 				F78B5AEE1C3DEE8D0018FEAE /* HttpRequest.swift in Sources */,
+				F76D3DA91C50AD5A00929FEC /* Utf8Validator.swift in Sources */,
 				F78B5AEF1C3DEE8D0018FEAE /* HttpResponse.swift in Sources */,
 				F78B5AF01C3DEE8D0018FEAE /* HttpServer.swift in Sources */,
 				F78B5AF11C3DEE8D0018FEAE /* HttpTransferCoder.swift in Sources */,
@@ -434,6 +439,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F78B5ACD1C3DECC20018FEAE /* SwiftHTTPTests.swift in Sources */,
+				F76D3DAA1C50AD5A00929FEC /* Utf8Validator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
