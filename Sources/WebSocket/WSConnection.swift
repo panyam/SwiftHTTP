@@ -132,11 +132,11 @@ public class WSConnection
                 if error != nil {
                     completion?(error: error)
                 } else {
-                    if frame.opcode == WSFrame.Opcode.PingFrame || frame.opcode == WSFrame.Opcode.CloseFrame
+                    Log.debug("\n\nControl Frame \(frame.opcode) Length: \(frame.payloadLength)")
+                    assert(frame.payloadLength == length, "Read fully didnt read fully!")
+                    if frame.opcode == WSFrame.Opcode.CloseFrame
                     {
-                        assert(frame.payloadLength == length, "Read fully didnt read fully!")
                         var source = BufferPayload(buffer: self.controlFrameBuffer, length: length)
-                        Log.debug("\n\nControl Frame \(frame.opcode) Length: \(frame.payloadLength)")
                         if frame.payloadLength > 0 {
                             let code : UInt = ((UInt(self.controlFrameBuffer[0]) << 8) & 0xff00) | (UInt(self.controlFrameBuffer[1]) & 0xff)
                             if code < 1000 || (code >= 1004 && code <= 1006) || (code >= 1012 && code < 3000) || (code >= 5000){
@@ -158,7 +158,14 @@ public class WSConnection
                                 }
                             }
                         }
-                        let replyCode = frame.opcode == WSFrame.Opcode.PingFrame ? WSFrame.Opcode.PongFrame : WSFrame.Opcode.CloseFrame
+                        let replyCode = WSFrame.Opcode.CloseFrame
+                        let message = self.startMessage(replyCode)
+                        self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
+                    }
+                    else if frame.opcode == WSFrame.Opcode.PingFrame
+                    {
+                        let source = BufferPayload(buffer: self.controlFrameBuffer, length: length)
+                        let replyCode = WSFrame.Opcode.PongFrame
                         let message = self.startMessage(replyCode)
                         self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
                     } else {

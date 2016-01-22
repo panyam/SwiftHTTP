@@ -1,0 +1,149 @@
+{
+   "agent": "AutobahnPython",
+   "behavior": "OK",
+   "behaviorClose": "OK",
+   "case": 279,
+   "closedByMe": true,
+   "createStats": true,
+   "createWirelog": true,
+   "description": "Send fragmented binary message message with message payload of length 4 * 2**20 (4M). Sent out in fragments of 1M.",
+   "droppedByMe": false,
+   "duration": 56,
+   "expectation": "Receive echo'ed binary message (with payload as sent).",
+   "expected": {},
+   "expectedClose": {
+      "closeCode": [
+         1000
+      ],
+      "closedByMe": true,
+      "requireClean": true
+   },
+   "failedByMe": false,
+   "httpRequest": "GET / HTTP/1.1\r\nUser-Agent: AutobahnTestSuite/0.7.4-0.10.9\r\nHost: 127.0.0.1:9001\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nPragma: no-cache\r\nCache-Control: no-cache\r\nSec-WebSocket-Key: JZ69cO3H9A6lEBxyjn6tBw==\r\nSec-WebSocket-Version: 13\r\n\r\n",
+   "httpResponse": "HTTP/1.1 101 SwitchingProtocols\r\nupgrade: websocket \r\ncontent-length: 0 \r\nconnection: Upgrade \r\nsec-websocket-accept: U/u/O5FRrK/SCC2pZHIn0KGxbQc= \r\n\r\n",
+   "id": "9.4.8",
+   "isServer": false,
+   "localCloseCode": 1000,
+   "localCloseReason": null,
+   "received": [],
+   "remoteCloseCode": 1000,
+   "remoteCloseReason": null,
+   "reportCompressionRatio": false,
+   "reportTime": true,
+   "result": "Received binary message of length 4194304.",
+   "resultClose": "Connection was properly closed",
+   "rxFrameStats": {
+      "0": 260,
+      "2": 1,
+      "8": 1
+   },
+   "rxOctetStats": {
+      "1": 39,
+      "2": 265,
+      "3": 29,
+      "4": 21,
+      "14": 1,
+      "28": 1,
+      "44": 1,
+      "52": 26,
+      "56": 1,
+      "151": 1,
+      "16332": 1,
+      "16334": 26,
+      "16342": 1,
+      "16358": 1,
+      "16370": 1,
+      "16384": 108,
+      "16385": 26,
+      "16386": 72,
+      "16387": 12,
+      "16388": 8
+   },
+   "started": "2016-01-22T06:46:32.260Z",
+   "trafficStats": null,
+   "txFrameStats": {
+      "0": 4,
+      "2": 1,
+      "8": 1
+   },
+   "txOctetStats": {
+      "6": 1,
+      "8": 1,
+      "240": 1,
+      "1048590": 4
+   },
+   "wasClean": true,
+   "wasCloseHandshakeTimeout": false,
+   "wasNotCleanReason": null,
+   "wasOpenHandshakeTimeout": false,
+   "wasServerConnectionDropTimeout": false,
+   "wirelog": [
+      [
+         "TO",
+         [
+            240,
+            "474554202f20485454502f312e310d0a557365722d4167656e743a204175746f6261686e5465737453756974652f302e372e342d302e31302e390d0a486f7374 ..."
+         ],
+         false
+      ],
+      [
+         "RO",
+         [
+            151,
+            "485454502f312e312031303120537769746368696e6750726f746f636f6c730d0a757067726164653a20776562736f636b6574200d0a636f6e74656e742d6c65 ..."
+         ]
+      ],
+      [
+         "TI",
+         100
+      ],
+      [
+         "TF",
+         [
+            2,
+            "0x03e8"
+         ],
+         8,
+         true,
+         0,
+         "00000000",
+         null,
+         null,
+         false
+      ],
+      [
+         "TO",
+         [
+            8,
+            "88820000000003e8"
+         ],
+         false
+      ],
+      [
+         "RO",
+         [
+            2,
+            "8802"
+         ]
+      ],
+      [
+         "RO",
+         [
+            2,
+            "03e8"
+         ]
+      ],
+      [
+         "RF",
+         [
+            2,
+            "0x03e8"
+         ],
+         8,
+         true,
+         0,
+         false,
+         null
+      ]
+   ]
+}

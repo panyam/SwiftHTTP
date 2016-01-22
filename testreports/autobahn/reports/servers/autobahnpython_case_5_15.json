@@ -1,0 +1,229 @@
+{
+   "agent": "AutobahnPython",
+   "behavior": "OK",
+   "behaviorClose": "OK",
+   "case": 59,
+   "closedByMe": false,
+   "createStats": true,
+   "createWirelog": true,
+   "description": "Send text Message fragmented into 2 fragments, then Continuation Frame with FIN = false where there is nothing to continue, then unfragmented Text Message, all sent in one chop.",
+   "droppedByMe": false,
+   "duration": 1,
+   "expectation": "The connection is failed immediately, since there is no message to continue.",
+   "expected": {
+      "NON-STRICT": [],
+      "OK": [
+         [
+            "message",
+            "fragment1fragment2",
+            false
+         ]
+      ]
+   },
+   "expectedClose": {
+      "closeCode": [
+         1002
+      ],
+      "closedByMe": false,
+      "requireClean": false
+   },
+   "failedByMe": false,
+   "httpRequest": "GET / HTTP/1.1\r\nUser-Agent: AutobahnTestSuite/0.7.4-0.10.9\r\nHost: 127.0.0.1:9001\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nPragma: no-cache\r\nCache-Control: no-cache\r\nSec-WebSocket-Key: HkL24L3LIW7F9uXldf9cfw==\r\nSec-WebSocket-Version: 13\r\n\r\n",
+   "httpResponse": "HTTP/1.1 101 SwitchingProtocols\r\nupgrade: websocket \r\ncontent-length: 0 \r\nconnection: Upgrade \r\nsec-websocket-accept: DFs82SrswZfseKkk7hTX8a6wwxA= \r\n\r\n",
+   "id": "5.15",
+   "isServer": false,
+   "localCloseCode": null,
+   "localCloseReason": null,
+   "received": [
+      [
+         "message",
+         "fragment1fragment2",
+         false
+      ]
+   ],
+   "remoteCloseCode": null,
+   "remoteCloseReason": null,
+   "reportCompressionRatio": false,
+   "reportTime": false,
+   "result": "Actual events match at least one expected.",
+   "resultClose": "Connection was properly closed",
+   "rxFrameStats": {
+      "0": 1,
+      "1": 1
+   },
+   "rxOctetStats": {
+      "2": 1,
+      "9": 1,
+      "11": 1,
+      "151": 1
+   },
+   "started": "2016-01-22T06:46:08.469Z",
+   "trafficStats": null,
+   "txFrameStats": {
+      "0": 2,
+      "1": 2
+   },
+   "txOctetStats": {
+      "15": 4,
+      "240": 1
+   },
+   "wasClean": false,
+   "wasCloseHandshakeTimeout": false,
+   "wasNotCleanReason": "peer dropped the TCP connection without previous WebSocket closing handshake",
+   "wasOpenHandshakeTimeout": false,
+   "wasServerConnectionDropTimeout": false,
+   "wirelog": [
+      [
+         "TO",
+         [
+            240,
+            "474554202f20485454502f312e310d0a557365722d4167656e743a204175746f6261686e5465737453756974652f302e372e342d302e31302e390d0a486f7374 ..."
+         ],
+         false
+      ],
+      [
+         "RO",
+         [
+            151,
+            "485454502f312e312031303120537769746368696e6750726f746f636f6c730d0a757067726164653a20776562736f636b6574200d0a636f6e74656e742d6c65 ..."
+         ]
+      ],
+      [
+         "TF",
+         [
+            9,
+            "fragment1"
+         ],
+         1,
+         false,
+         0,
+         "00000000",
+         null,
+         null,
+         false
+      ],
+      [
+         "TO",
+         [
+            15,
+            "018900000000667261676d656e7431"
+         ],
+         false
+      ],
+      [
+         "TF",
+         [
+            9,
+            "fragment2"
+         ],
+         0,
+         true,
+         0,
+         "00000000",
+         null,
+         null,
+         false
+      ],
+      [
+         "TO",
+         [
+            15,
+            "808900000000667261676d656e7432"
+         ],
+         false
+      ],
+      [
+         "TF",
+         [
+            9,
+            "fragment3"
+         ],
+         0,
+         false,
+         0,
+         "00000000",
+         null,
+         null,
+         false
+      ],
+      [
+         "TO",
+         [
+            15,
+            "008900000000667261676d656e7433"
+         ],
+         false
+      ],
+      [
+         "TF",
+         [
+            9,
+            "fragment4"
+         ],
+         1,
+         true,
+         0,
+         "00000000",
+         null,
+         null,
+         false
+      ],
+      [
+         "TO",
+         [
+            15,
+            "818900000000667261676d656e7434"
+         ],
+         false
+      ],
+      [
+         "KL",
+         1
+      ],
+      [
+         "RO",
+         [
+            2,
+            "0109"
+         ]
+      ],
+      [
+         "RO",
+         [
+            9,
+            "667261676d656e7431"
+         ]
+      ],
+      [
+         "RF",
+         [
+            9,
+            "fragment1"
+         ],
+         1,
+         false,
+         0,
+         false,
+         null
+      ],
+      [
+         "RO",
+         [
+            11,
+            "8009667261676d656e7432"
+         ]
+      ],
+      [
+         "RF",
+         [
+            9,
+            "fragment2"
+         ],
+         0,
+         true,
+         0,
+         false,
+         null
+      ]
+   ]
+}
