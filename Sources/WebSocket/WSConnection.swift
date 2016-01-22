@@ -140,10 +140,6 @@ public class WSConnection
                         {
                             Log.debug("Received UTF8 payload: \(utf8String)")
                         }
-                        else if let asciiString = NSString(data: NSData(bytes: self.controlFrameBuffer, length: length), encoding: NSASCIIStringEncoding)
-                        {
-                            Log.debug("Received ASCII payload: \(asciiString)")
-                        }
                         let source = BufferPayload(buffer: self.controlFrameBuffer, length: length)
                         let replyCode = frame.opcode == WSFrame.Opcode.PingFrame ? WSFrame.Opcode.PongFrame : WSFrame.Opcode.CloseFrame
                         let message = self.startMessage(replyCode)

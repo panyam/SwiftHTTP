@@ -337,7 +337,7 @@ public class WSMessageReader
                         }
                     } else {
                         let endReached = self.reader.remaining == 0 && self.currentFrame.isFinal
-                        if self.currentFrame.opcode == WSFrame.Opcode.TextFrame && self.validateUtf8
+                        if self.currentMessage!.messageType == WSFrame.Opcode.TextFrame && self.validateUtf8
                         {
                             let utf8Validated = self.utf8Validator.validate(currentBuffer, length) &&
                                                     (!endReached || self.utf8Validator.finish())
