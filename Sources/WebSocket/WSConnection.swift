@@ -135,12 +135,29 @@ public class WSConnection
                     if frame.opcode == WSFrame.Opcode.PingFrame || frame.opcode == WSFrame.Opcode.CloseFrame
                     {
                         assert(frame.payloadLength == length, "Read fully didnt read fully!")
+                        var source = BufferPayload(buffer: self.controlFrameBuffer, length: length)
                         Log.debug("\n\nControl Frame \(frame.opcode) Length: \(frame.payloadLength)")
-                        if let utf8String = NSString(data: NSData(bytes: self.controlFrameBuffer, length: length), encoding: NSUTF8StringEncoding)
-                        {
-                            Log.debug("Received UTF8 payload: \(utf8String)")
+                        if frame.payloadLength > 0 {
+                            let code : UInt = ((UInt(self.controlFrameBuffer[0]) << 8) & 0xff00) | (UInt(self.controlFrameBuffer[1]) & 0xff)
+                            if code < 1000 || (code >= 1004 && code <= 1006) || (code >= 1012 && code < 3000) || (code >= 5000){
+                                // invalid close codes
+                                let codeBuffer = ReadBufferType.alloc(2)
+                                codeBuffer[0] = 0x03
+                                codeBuffer[1] = 0xEA
+                                source = BufferPayload(buffer: codeBuffer, length: 2)
+                            }
+                            else if length > 2 {
+                                if let utf8String = NSString(data: NSData(bytes: self.controlFrameBuffer.advancedBy(2), length: length - 2), encoding: NSUTF8StringEncoding)
+                                {
+                                    Log.debug("Received UTF8 payload: \(utf8String)")
+                                } else {
+                                    let codeBuffer = ReadBufferType.alloc(2)
+                                    codeBuffer[0] = 0x03
+                                    codeBuffer[1] = 0xEA
+                                    source = BufferPayload(buffer: codeBuffer, length: 2)
+                                }
+                            }
                         }
-                        let source = BufferPayload(buffer: self.controlFrameBuffer, length: length)
                         let replyCode = frame.opcode == WSFrame.Opcode.PingFrame ? WSFrame.Opcode.PongFrame : WSFrame.Opcode.CloseFrame
                         let message = self.startMessage(replyCode)
                         self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
