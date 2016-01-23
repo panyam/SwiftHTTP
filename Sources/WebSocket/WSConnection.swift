@@ -38,7 +38,7 @@ public class WSConnection
     public var onClosed : ClosedCallback?
     private var controlFrameBuffer : ReadBufferType = ReadBufferType.alloc(256)
 
-    public init(_ reader: Reader, writer: Writer)
+    public init(_ reader: Reader, writer: Writer, _ extensions: [WSExtension])
     {
         self.frameReader = WSFrameReader(reader)
         self.messageReader = WSMessageReader(frameReader)

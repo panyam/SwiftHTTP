@@ -12,6 +12,7 @@ public let WS_HANDSHAKE_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 public typealias WSHandler = (connection : WSConnection) -> Void
 
 public class WSRequestServer : HttpRequestServer, WSConnectionDelegate {
+    public var extensionRegistry = WSExtensionRegistry()
     var handler : WSHandler
 
     public init(_ handler: WSHandler)
@@ -38,8 +39,18 @@ public class WSRequestServer : HttpRequestServer, WSConnectionDelegate {
             if let base64Encoded = BaseXEncoding.Base64Encode(sha1Bytes)
             {
                 response.headers.setValueFor("Sec-WebSocket-Accept", value: base64Encoded)
+                // process WS extensions to see what we can handle
+                var extensions : [WSExtension] = []
+                if let extensionHeader = request.headers.forKey("Sec-WebSocket-Extensions")
+                {
+                    extensions = parseWSExtensions(extensionHeader)
+                    let extensionHeader = response.headers.forKey("Sec-WebSocket-Extensions", create: true)
+                    for extn in extensions {
+                        extensionHeader?.addValue(extn.negotiationResponseString)
+                    }
+                }
                 response.writeHeaders()
-                let connection = WSConnection(connection.reader, writer: connection.writer)
+                let connection = WSConnection(connection.reader, writer: connection.writer, extensions)
                 connections.append(ConnectionWrapper(connection: connection, request: request, response: response))
                 connection.delegate = self
                 handler(connection: connection)
@@ -70,6 +81,45 @@ public class WSRequestServer : HttpRequestServer, WSConnectionDelegate {
         }
 
         return nil
+    }
+    
+    private func parseWSExtensions(values: Header) -> [WSExtension]
+    {
+        var extensions = [WSExtension]()
+        var acceptedNames = [String: Bool]()
+        for value in values.allValues() {
+            for var extensionString in value.componentsSeparatedByString(",") {
+                extensionString = extensionString.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                var extensionName = ""
+                var arguments = [(String, String)]()
+                for (index, extensionParam) in extensionString.componentsSeparatedByString(";").enumerate() {
+                    let extParam = extensionParam.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                    if index == 0 {
+                        extensionName = extParam
+                        if acceptedNames[extensionName] != nil {
+                            continue
+                        }
+                    } else {
+                        let argparts = extParam.componentsSeparatedByString("=")
+                        var argname = ""
+                        var argvalue = ""
+                        if argparts.count > 0 {
+                            argname = argparts[0]
+                            if argparts.count > 1 {
+                                argvalue = argparts[1]
+                            }
+                        }
+                        arguments.append((argname, argvalue))
+                    }
+                }
+                if let extn = self.extensionRegistry.createExtension(extensionName, arguments: arguments)
+                {
+                    acceptedNames[extensionName] = true
+                    extensions.append(extn)
+                }
+            }
+        }
+        return extensions
     }
     
     private struct ConnectionWrapper

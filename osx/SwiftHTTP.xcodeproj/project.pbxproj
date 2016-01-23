@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		F71DB0BA1C3F4C2300837E18 /* CommonCrypto.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F71DB0B91C3F4C2300837E18 /* CommonCrypto.xcconfig */; };
+		F73EE64B1C536FCF00DBA171 /* WSExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73EE64A1C536FCF00DBA171 /* WSExtension.swift */; };
+		F73EE64D1C537F1200DBA171 /* WSExtensionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73EE64C1C537F1200DBA171 /* WSExtensionRegistry.swift */; };
+		F73EE64F1C5381FB00DBA171 /* WSPMCExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73EE64E1C5381FB00DBA171 /* WSPMCExtension.swift */; };
+		F73EE6511C538A6800DBA171 /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73EE6501C538A6800DBA171 /* Strings.swift */; };
 		F76D3DA91C50AD5A00929FEC /* Utf8Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76D3DA81C50AD5A00929FEC /* Utf8Validator.swift */; };
 		F76D3DAA1C50AD5A00929FEC /* Utf8Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76D3DA81C50AD5A00929FEC /* Utf8Validator.swift */; };
 		F78449491C3F5A4100037251 /* libcrypto.0.9.8.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F78449481C3F5A4100037251 /* libcrypto.0.9.8.dylib */; };
@@ -63,6 +67,10 @@
 		F71DB0BC1C3F4C8600837E18 /* iphonesimulator.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = iphonesimulator.modulemap; sourceTree = "<group>"; };
 		F71DB0BD1C3F4C8600837E18 /* macosx.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = macosx.modulemap; sourceTree = "<group>"; };
 		F7376F391C372F2D00CBAD38 /* WSMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSMessage.swift; sourceTree = "<group>"; };
+		F73EE64A1C536FCF00DBA171 /* WSExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSExtension.swift; sourceTree = "<group>"; };
+		F73EE64C1C537F1200DBA171 /* WSExtensionRegistry.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSExtensionRegistry.swift; sourceTree = "<group>"; };
+		F73EE64E1C5381FB00DBA171 /* WSPMCExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WSPMCExtension.swift; sourceTree = "<group>"; };
+		F73EE6501C538A6800DBA171 /* Strings.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Strings.swift; path = Utils/Strings.swift; sourceTree = "<group>"; };
 		F769F76E1C30A23100A59A75 /* HttpBody.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpBody.swift; path = ../Sources/Core/HttpBody.swift; sourceTree = "<group>"; };
 		F769F76F1C30A23100A59A75 /* HttpConnection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpConnection.swift; path = ../Sources/Core/HttpConnection.swift; sourceTree = "<group>"; };
 		F769F7701C30A23100A59A75 /* HttpHeaders.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HttpHeaders.swift; path = ../Sources/Core/HttpHeaders.swift; sourceTree = "<group>"; };
@@ -171,6 +179,7 @@
 				F769F79C1C30E4E900A59A75 /* Base64.swift */,
 				F769F7A01C30F75600A59A75 /* Crypto.swift */,
 				F76D3DA81C50AD5A00929FEC /* Utf8Validator.swift */,
+				F73EE6501C538A6800DBA171 /* Strings.swift */,
 			);
 			name = Utils;
 			sourceTree = "<group>";
@@ -182,6 +191,9 @@
 				F772FDD11C3606D40053646F /* WSFrame.swift */,
 				F772FDD21C3606D40053646F /* WSHandler.swift */,
 				F7376F391C372F2D00CBAD38 /* WSMessage.swift */,
+				F73EE64A1C536FCF00DBA171 /* WSExtension.swift */,
+				F73EE64C1C537F1200DBA171 /* WSExtensionRegistry.swift */,
+				F73EE64E1C5381FB00DBA171 /* WSPMCExtension.swift */,
 			);
 			path = WebSocket;
 			sourceTree = "<group>";
@@ -411,17 +423,21 @@
 			buildActionMask = 2147483647;
 			files = (
 				F78B5AE71C3DEE8D0018FEAE /* Base64.swift in Sources */,
+				F73EE64B1C536FCF00DBA171 /* WSExtension.swift in Sources */,
 				F78B5AE81C3DEE8D0018FEAE /* Crypto.swift in Sources */,
 				F78B5AE91C3DEE8D0018FEAE /* Payload.swift in Sources */,
 				F78B5AEA1C3DEE8D0018FEAE /* HttpBody.swift in Sources */,
 				F78B5AEB1C3DEE8D0018FEAE /* HttpConnection.swift in Sources */,
 				F78B5AEC1C3DEE8D0018FEAE /* HttpHeaders.swift in Sources */,
+				F73EE6511C538A6800DBA171 /* Strings.swift in Sources */,
 				F78B5AED1C3DEE8D0018FEAE /* HttpMessage.swift in Sources */,
 				F78B5AEE1C3DEE8D0018FEAE /* HttpRequest.swift in Sources */,
+				F73EE64D1C537F1200DBA171 /* WSExtensionRegistry.swift in Sources */,
 				F76D3DA91C50AD5A00929FEC /* Utf8Validator.swift in Sources */,
 				F78B5AEF1C3DEE8D0018FEAE /* HttpResponse.swift in Sources */,
 				F78B5AF01C3DEE8D0018FEAE /* HttpServer.swift in Sources */,
 				F78B5AF11C3DEE8D0018FEAE /* HttpTransferCoder.swift in Sources */,
+				F73EE64F1C5381FB00DBA171 /* WSPMCExtension.swift in Sources */,
 				F78B5AF21C3DEE8D0018FEAE /* MimeType.swift in Sources */,
 				F78B5AF31C3DEE8D0018FEAE /* HttpStatusCode.swift in Sources */,
 				F78B5AF41C3DEE8D0018FEAE /* Router.swift in Sources */,
