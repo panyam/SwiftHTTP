@@ -1,0 +1,10 @@
+//
+//  Zlib.xcconfig
+//  SwiftHTTP
+//
+//  Created by Sriram Panyam on 1/24/16.
+//  Copyright © 2016 Sriram Panyam. All rights reserved.
+//
+MODULEMAP_FILE[sdk=iphoneos*]        = $(SRCROOT)/Zlib/iphoneos.modulemap
+MODULEMAP_FILE[sdk=iphonesimulator*] = $(SRCROOT)/Zlib/iphonesimulator.modulemap
+MODULEMAP_FILE[sdk=macosx*]          =  $(SRCROOT)/Zlib/macosx.modulemap
