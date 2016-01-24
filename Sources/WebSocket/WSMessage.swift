@@ -402,15 +402,9 @@ public class WSMessageReader
 //        Log.debug("Processing New Frame: \(self.currentFrame)")
         frameCount += 1
         self.currentFrame = frame
-        if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
+        if self.currentFrame.isControlFrame
         {
-            // non 0 reserved bits without negotiated extensions
-            // close the connection
-            self.readerClosed()
-        }
-        else if self.currentFrame.isControlFrame
-        {
-            if !self.currentFrame.isFinal || self.currentFrame.payloadLength > 125
+            if !self.currentFrame.isFinal || self.currentFrame.payloadLength > 125 || frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
             {
                 // close the connection
                 self.readerClosed()
@@ -424,30 +418,37 @@ public class WSMessageReader
                     }
                 }
             }
-        }
-        else if self.currentFrame.opcode.isReserved
-        {
-            // close the connection
-            self.readerClosed()
-        } else if frame.opcode == WSFrame.Opcode.ContinuationFrame {
-            if currentMessage == nil
+        } else {    // a non control frame
+            if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
             {
+                // non 0 reserved bits without negotiated extensions
+                // close the connection
                 self.readerClosed()
-            } else {
-                callback?(error: nil)
             }
-        } else {
-            if currentMessage != nil
+            else if self.currentFrame.opcode.isReserved
             {
-                // we already have a message so drop this
+                // close the connection
                 self.readerClosed()
+            } else if frame.opcode == WSFrame.Opcode.ContinuationFrame {
+                if currentMessage == nil
+                {
+                    self.readerClosed()
+                } else {
+                    callback?(error: nil)
+                }
             } else {
-                // starting a new message
-                self.utf8Validator.reset()
-                self.messageCounter += 1
-                currentMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
-                // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
-                self.onMessage?(message: currentMessage!)
+                if currentMessage != nil
+                {
+                    // we already have a message so drop this
+                    self.readerClosed()
+                } else {
+                    // starting a new message
+                    self.utf8Validator.reset()
+                    self.messageCounter += 1
+                    currentMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
+                    // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
+                    self.onMessage?(message: currentMessage!)
+                }
             }
         }
     }

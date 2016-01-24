@@ -33,6 +33,7 @@ public class WSRequestServer : HttpRequestServer, WSConnectionDelegate {
             response.headers.setValueFor("Connection", value: "Upgrade")
             response.headers.setValueFor("Upgrade", value: "websocket")
             
+            
             let websocketKey = request.headers.firstValueFor("Sec-WebSocket-Key")!
             let websocketAcceptString = websocketKey + WS_HANDSHAKE_GUID
             let sha1Bytes = websocketAcceptString.SHA1Bytes()
