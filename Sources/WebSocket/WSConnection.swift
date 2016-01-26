@@ -30,33 +30,21 @@ public class WSConnection
 
     var delegate : WSConnectionDelegate?
     private var frameReader: WSFrameReader
-    private var messageReader : WSMessageReader
     private var frameWriter: WSFrameWriter
-    private var messageWriter : WSMessageWriter
 
     public var onMessage : MessageCallback?
     public var onClosed : ClosedCallback?
     private var controlFrameBuffer : ReadBufferType = ReadBufferType.alloc(256)
-
+    
+    public var transportClosed = false
+    
     public init(_ reader: Reader, writer: Writer, _ extensions: [WSExtension])
     {
+        self.maxFrameWriteSize = DEFAULT_MAX_FRAME_SIZE
         self.frameReader = WSFrameReader(reader)
-        self.messageReader = WSMessageReader(frameReader)
         self.frameWriter = WSFrameWriter(writer)
-        self.messageWriter = WSMessageWriter(frameWriter)
 
-        messageReader.onControlFrame = self.handleControlFrame
-        messageReader.onClosed = {
-            self.connectionClosed()
-        }
-        messageReader.onMessage = {(message) in
-            self.onMessage?(message: message)
-        }
-        messageWriter.onClosed = {
-            self.connectionClosed()
-        }
-
-        start()
+        startReading()
         // So at this point we have a frame reader from which *something* can 
         // consume frames.  So messages (and channels) are a higher level 
         // abstraction on top of frames.  We have a message object from which
@@ -67,59 +55,18 @@ public class WSConnection
         // which channel the frame needs to go to (including control frames).
     }
     
-    public func start()
+    private func handleClose() {
+        self.connectionClosed()
+    }
+
+    private func handleMessage(message: WSMessage)
     {
-        self.messageReader.start()
+        self.onMessage?(message: message)
     }
     
     /**
-     * Starts a new message tha
-     t can be streamed out by the caller.
-     * Once a message is created it can be written to continuosly.
+     * Called when a control frame has been read and needs to be handled.
      */
-    public func startMessage(opcode: WSFrame.Opcode) -> WSMessage
-    {
-        return self.messageWriter.startMessage(opcode)
-    }
-    
-    /**
-     * Appends more data to a message.
-     */
-    public func write(message: WSMessage, maskingKey: UInt32, source: Payload, isFinal: Bool, callback: CompletionCallback?)
-    {
-        self.messageWriter.write(message, maskingKey: maskingKey, source: source, isFinal: isFinal, callback: callback)
-    }
-    
-    /**
-     * Appends more data to a message.
-     */
-    public func write(message: WSMessage, source: Payload, isFinal: Bool, callback: CompletionCallback?)
-    {
-        self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: isFinal, callback: callback)
-    }
-    
-    /**
-     * Appends more data to a message.
-     */
-    public func write(message: WSMessage, source: Payload, callback: CompletionCallback?)
-    {
-        self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: false, callback: callback)
-    }
-    
-    /**
-     * Closes the message.  This message can no longer be written to.
-     */
-    public func closeMessage(message: WSMessage, callback: CompletionCallback?)
-    {
-        self.messageWriter.closeMessage(message, callback: callback)
-        self.messageReader.continueReading()
-    }
-    
-    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, fully: Bool, callback: WSMessageReadCallback?)
-    {
-        self.messageReader.read(message, buffer: buffer, length: length, fully: fully, callback: callback)
-    }
-    
     private func handleControlFrame(frame: WSFrame, completion: CompletionCallback?)
     {
         if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
@@ -160,14 +107,14 @@ public class WSConnection
                         }
                         let replyCode = WSFrame.Opcode.CloseFrame
                         let message = self.startMessage(replyCode)
-                        self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
+                        self.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
                     }
                     else if frame.opcode == WSFrame.Opcode.PingFrame
                     {
                         let source = BufferPayload(buffer: self.controlFrameBuffer, length: length)
                         let replyCode = WSFrame.Opcode.PongFrame
                         let message = self.startMessage(replyCode)
-                        self.messageWriter.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
+                        self.write(message, maskingKey: 0, source: source, isFinal: true, callback: completion)
                     } else {
                         // ignore others (but finish their payloads off first)!
                         completion?(error: nil)
@@ -181,6 +128,405 @@ public class WSConnection
     {
         self.delegate?.connectionClosed(self)
         self.onClosed?()
+    }
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //      All Message write related operations
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+    * Frames wont be bigger than this
+    */
+    private var maxFrameWriteSize : Int = DEFAULT_MAX_FRAME_SIZE
+    private var currMessageCount = 0
+    private var allMessages = [WSMessage]()
+    private var currentWriteMessage : WSMessage?
+
+    
+    /**
+    * Starts a new message tha
+    t can be streamed out by the caller.
+    * Once a message is created it can be written to continuosly.
+    */
+     
+     /**
+     * Starts a new message that can be streamed out by the caller.
+     * Once a message is created it can be written to continuosly.
+     */
+    public func startMessage(opcode: WSFrame.Opcode) -> WSMessage
+    {
+        currMessageCount += 1
+        let newMessage = WSMessage(type: opcode, id: String(format: "msg:%05d", currMessageCount))
+        allMessages.append(newMessage)
+        return newMessage
+    }
+    
+    /**
+     * Appends more data to a message.
+     */
+    public func write(message: WSMessage, maskingKey: UInt32, source: Payload, isFinal: Bool, callback: CompletionCallback?)
+    {
+        // queue the request
+        if self.transportClosed
+        {
+            callback?(error: IOErrorType.Closed)
+        } else {
+            message.write(source, isFinal: isFinal, maskingKey: maskingKey, callback: callback)
+            continueWriting()
+        }
+    }
+    
+    /**
+     * Appends more data to a message.
+     */
+    public func write(message: WSMessage, source: Payload, isFinal: Bool, callback: CompletionCallback?)
+    {
+        write(message, maskingKey: 0, source: source, isFinal: isFinal, callback: callback)
+    }
+    
+    /**
+     * Appends more data to a message.
+     */
+    public func write(message: WSMessage, source: Payload, callback: CompletionCallback?)
+    {
+        write(message, maskingKey: 0, source: source, isFinal: false, callback: callback)
+    }
+    
+    /**
+     * Closes the message.  This message can no longer be written to.
+     */
+    public func closeMessage(message: WSMessage, callback: CompletionCallback?)
+    {
+        if self.transportClosed
+        {
+            callback?(error: IOErrorType.Closed)
+        } else {
+            message.close(callback)
+        }
+        self.continueReading()
+    }
+    
+    /**
+     * Writing messages is slightly simpler than reading messages.  With reading there was the problem of not
+     * knowing when a message started and having to notify connection handlers on new messages so that *then*
+     * they could initiate reads.
+     *
+     * With writes this problem does not exist.  ie a write can only be initiate by the connection handler and
+     * each write marks the start of a new message.  How the message gets fragment is what this writer controls
+     * in concert with the actual message source that is provided at the start of a write.
+     *
+     * So to prevent a front of line blocking of messages, round-robin (or with some other custom scheduling
+     * technique) can be used to decide which message is to be sent in each write call.
+     */
+    private func continueWriting()
+    {
+        // only start a request if the writer is idle
+        // (if it is already writing a frame then dont bother it)
+        if frameWriter.isIdle
+        {
+            if currentWriteMessage != nil
+            {
+                sendNextFrame(currentWriteMessage!)
+            } else {
+                // pick a message which has messages
+                for message in allMessages
+                {
+                    if !message.writeQueue.isEmpty
+                    {
+                        currentWriteMessage = message
+                        continueWriting()
+                        return
+                    }
+                }
+            }
+        }
+    }
+    
+    private func sendNextFrame(message: WSMessage)
+    {
+        message.writeNextFrame(frameWriter, maxFrameSize: maxFrameWriteSize) { (writeRequest, error) -> Void in
+            if error != nil
+            {
+                self.transportClosed = (error as? IOErrorType) == IOErrorType.Closed
+                writeRequest?.callback?(error: error)
+                self.unwindWritesWithError(message, error: error!)
+            }
+            else
+            {
+                if !message.hasMoreFrames
+                {
+                    self.currentWriteMessage = nil
+                    assert(self.frameWriter.isIdle)
+                }
+                writeRequest?.callback?(error: error)
+                self.continueWriting()
+            }
+        }
+    }
+    
+    /**
+     * Called when a read error occurred so all queued requests now need to be cancelled
+     * with the error.
+     */
+    private func unwindWritesWithError(message: WSMessage, error: ErrorType)
+    {
+        Log.debug("Unwinding with error: \(error)")
+        while let next = message.writeQueue.first
+        {
+            message.writeQueue.removeFirst()
+            next.callback?(error: error)
+        }
+    }
+
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //      All Message read related operations
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public var validateUtf8 = true
+    public var utf8Validator = Utf8Validator()
+    private var messageCounter = 0
+    
+    /**
+     * Information about the current message and frame being read
+     * Only one frame can be read at a time.  It is upto the extensions
+     * to demux these frames into messages across several channels
+     */
+    private var currentReadMessage : WSMessage?
+    private var currentFrame = WSFrame()
+    
+    /**
+     * Holds the outstanding read requests for each message as they are being read.
+     * TODO: Make this a dictionary keyed by the channel and/or message id
+     */
+     //    private var readQueue = WSReadRequest()
+    private var currentReadRequest : WSReadRequest?
+    
+    /**
+     * This method must always be called
+     */
+    public func startReading()
+    {
+        self.continueReading()
+    }
+    
+    /**
+     * Reads the body.  Here we can do a couple of things:
+     * When a read is called, the reader can be either in "idle" state or in "reading header" state or in "reading payload" state
+     * Here if a start is happening then we have to defer the "read" to when the start has finsished till we have data.
+     * Once the reader is in "reading payload" state, we can have the following scenarios:
+     * 1. The frame is a control frame, then just handle the frame and go back to reading again till the next two cases
+     *    match.
+     * 2. The frame belongs to a message that is new - so call the onMessage to begin handling of a new message
+     *    (this should get the message handler to start doing reads on the data which will come back through this path again)
+     * 3. The frame belongs to an existing message (ie is a continuation):
+     *    a. The message has outstanding read requests so serve it (and pop request off the queue)
+     *    b. The message has no outstanding read requests.  At this point we can do two things:
+     *       1. Buffer the data until we read frames corresponding to a message that has outstanding read requests.
+     *          If there are no messages with read requests then dont buffer any data obviously.  Also if the buffer
+     *          exceeds a particular threshold then the connection can just close with a 1009 response.
+     *       2. Or just block until a read comes from the handler of this message and queues a read request.
+     *          This is not a bad option since this way buffering can be done by the caller who may decide how much
+     *          buffering to do (and in general buffer management can get messy).
+     *
+     * How to handle the first ever message?   When a connection is first created it has a stream from which reads
+     * and writes can be done.  This reader will be wrapped with a frame reader to return frames which is also nice.
+     * However the frame reader will only be read from when a read on a message is invoked.  However a message cannot
+     * be created unless the frame reader has been read.   So a start on the frame reader has to be kicked off at some
+     * time (or an intial read has to be kicked off) so that frames can start getting read and passed off to the message
+     * handlers for processing.
+     *
+     * One other scenario this can end up in is say if there are 5 messages being processed and neither of them have done a read yet
+     * so on the connection there is a frame for a new message, since the read is not happening this new frame wont be read.
+     *
+     * Looks like both cases can be solved with a periodic read that happens in a loop (say every second or so as long as the
+     * read queue is empty)
+     */
+    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, fully: Bool, callback: WSMessageReadCallback?)
+    {
+        if transportClosed
+        {
+            callback?(length: 0, endReached: true, error: IOErrorType.Closed)
+        } else {
+            // queue the request
+            assert(currentReadRequest == nil, "A read request is already running.  Make the request in a callback of another request or use promises")
+            currentReadRequest = WSReadRequest(message: message, buffer: buffer, fully: fully, length: length, satisfied: 0, callback: callback)
+            continueReading()
+        }
+    }
+    
+    private var frameReadStarted = false
+    /**
+     * This method is the main "scheduler" loop of the reader.
+     */
+    func continueReading()
+    {
+        // now see what to do based on the reader state
+        // TODO: ensure a single loop/queue
+        if frameReader.isIdle
+        {
+            // no frames have been read yet
+            startNextFrame()
+        }
+        
+        // means we have started a frame, whether it is a control frame or not
+        // someone will "read" it.  So if there are no read requests it means
+        // there is eventually bound to be one
+        if frameReader.processingPayload && currentReadRequest != nil && !frameReadStarted
+        {
+            assert(!frameReadStarted)
+            frameReadStarted = true
+            var theReadRequest = currentReadRequest!
+            let currentBuffer = theReadRequest.buffer.advancedBy(theReadRequest.satisfied)
+            let remaining = theReadRequest.remaining
+            //            Log.debug("Message Reader Started reading next frame body, Type: \(self.currentFrame.opcode), Remaining: \(remaining)")
+            frameReader.read(currentBuffer, length: remaining, fully: theReadRequest.fully) { (length, error) in
+                self.frameReadStarted = false
+                if error == nil
+                {
+                    assert(length >= 0, "Length cannot be negative")
+                    theReadRequest.satisfied += length
+                    if self.currentFrame.isControlFrame
+                    {
+                        // do nothing - wait till entire frame is processed
+                        if theReadRequest.remaining == 0
+                        {
+                            // process the frame and start the next frame
+                            //                            self.processCurrentNewFrame {(error) in
+                            self.startNextFrame()
+                            //                            }
+                        } else {
+                            // do nothing as the control frame must be read fully before being processed
+                            self.continueReading()
+                        }
+                    } else {
+                        let endReached = self.frameReader.remaining == 0 && self.currentFrame.isFinal
+                        if self.currentReadMessage!.messageType == WSFrame.Opcode.TextFrame && self.validateUtf8
+                        {
+                            let utf8Validated = self.utf8Validator.validate(currentBuffer, length) &&
+                                (!endReached || self.utf8Validator.finish())
+                            if !utf8Validated
+                            {
+                                self.readerClosed()
+                                return
+                            }
+                        }
+                        self.currentReadRequest = nil
+                        if endReached
+                        {
+                            self.currentReadMessage = nil
+                        }
+                        theReadRequest.callback?(length: theReadRequest.satisfied, endReached: endReached, error: error)
+                    }
+                } else {
+                    self.currentReadRequest = nil
+                    self.currentReadMessage = nil
+                    theReadRequest.callback?(length: 0, endReached: false, error: error)
+                }
+            }
+        }
+    }
+    
+    
+    private func startNextFrame()
+    {
+        // kick off the reading of the first frame
+        //        Log.debug("Started reading next frame header, State: \(reader.state)")
+        self.frameReader.start { (frame, error) in
+            if error == nil && frame != nil {
+                // we have the frame so process it and start the next frame
+                self.processNewFrame(frame!) {(error) in
+                    if !self.transportClosed
+                    {
+                        self.continueReading()
+                    } else {
+                        Log.debug("Transport closed")
+                    }
+                }
+            } else {
+                self.readerClosed()
+            }
+        }
+    }
+    
+    private func readerClosed()
+    {
+        transportClosed = true
+        self.onClosed?()
+    }
+    
+    var frameCount = 0
+    /**
+     * This method will only be called when a control frame has
+     * finished or if a non-control frame is of size 0
+     */
+    private func processNewFrame(frame: WSFrame, callback : CompletionCallback?)
+    {
+        frameCount += 1
+        self.currentFrame = frame
+        if self.currentFrame.isControlFrame
+        {
+            if !self.currentFrame.isFinal || self.currentFrame.payloadLength > 125 || frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
+            {
+                // close the connection
+                self.readerClosed()
+            } else {
+                self.handleControlFrame(self.currentFrame) {(error) in
+                    if (self.currentFrame.opcode == WSFrame.Opcode.CloseFrame)
+                    {
+                        self.readerClosed()
+                    } else {
+                        callback?(error: error)
+                    }
+                }
+            }
+        } else {    // a non control frame
+            if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
+            {
+                // non 0 reserved bits without negotiated extensions
+                // close the connection
+                self.readerClosed()
+            }
+            else if self.currentFrame.opcode.isReserved
+            {
+                // close the connection
+                self.readerClosed()
+            } else if frame.opcode == WSFrame.Opcode.ContinuationFrame {
+                if currentReadMessage == nil
+                {
+                    self.readerClosed()
+                } else {
+                    callback?(error: nil)
+                }
+            } else {
+                if currentReadMessage != nil
+                {
+                    // we already have a message so drop this
+                    self.readerClosed()
+                } else {
+                    // starting a new message
+                    self.utf8Validator.reset()
+                    self.messageCounter += 1
+                    currentReadMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
+                    // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
+                    self.onMessage?(message: currentReadMessage!)
+                }
+            }
+        }
+    }
+    
+    private struct WSReadRequest
+    {
+        var message : WSMessage?
+        var buffer : ReadBufferType
+        var fully : Bool = false
+        var length : LengthType
+        var satisfied : LengthType = 0
+        var callback : WSMessageReadCallback?
+        
+        var remaining : LengthType { return length - satisfied }
     }
 }
 
@@ -375,412 +721,6 @@ public class WSMessage
                     frameCallback(writeRequest: nil, error: error)
                 }
             }
-        }
-    }
-}
-
-public class WSMessageReader
-{
-    public var validateUtf8 = true
-    public var utf8Validator = Utf8Validator()
-    
-    private var messageCounter = 0
-    private var transportClosed = false
-    public typealias ControlFrameCallback = (frame: WSFrame, completion: CompletionCallback?) -> Void
-    public typealias MessageCallback = (message: WSMessage) -> Void
-    public var onMessage : MessageCallback?
-    public var onControlFrame : ControlFrameCallback?
-    public var onClosed : (Void -> Void)?
-    
-    /**
-     * Information about the current frame being read
-     * Only one frame can be read at a time.  It is upto the extensions
-     * to demux these frames into messages across several channels
-     */
-    private var currentMessage : WSMessage?
-    private var currentFrame = WSFrame()
-    
-    /**
-     * Holds the outstanding read requests for each message as they are being read.
-     * TODO: Make this a dictionary keyed by the channel and/or message id
-     */
-     //    private var readQueue = WSReadRequest()
-    private var currentReadRequest : WSReadRequest?
-    
-    private var reader : WSFrameReader
-    
-    public init(_ reader: WSFrameReader)
-    {
-        self.reader = reader
-    }
-    
-    /**
-     * This method must always be called
-     */
-    public func start()
-    {
-        self.continueReading()
-    }
-    
-    /**
-     * Reads the body.  Here we can do a couple of things:
-     * When a read is called, the reader can be either in "idle" state or in "reading header" state or in "reading payload" state
-     * Here if a start is happening then we have to defer the "read" to when the start has finsished till we have data.
-     * Once the reader is in "reading payload" state, we can have the following scenarios:
-     * 1. The frame is a control frame, then just handle the frame and go back to reading again till the next two cases
-     *    match.
-     * 2. The frame belongs to a message that is new - so call the onMessage to begin handling of a new message
-     *    (this should get the message handler to start doing reads on the data which will come back through this path again)
-     * 3. The frame belongs to an existing message (ie is a continuation):
-     *    a. The message has outstanding read requests so serve it (and pop request off the queue)
-     *    b. The message has no outstanding read requests.  At this point we can do two things:
-     *       1. Buffer the data until we read frames corresponding to a message that has outstanding read requests.
-     *          If there are no messages with read requests then dont buffer any data obviously.  Also if the buffer
-     *          exceeds a particular threshold then the connection can just close with a 1009 response.
-     *       2. Or just block until a read comes from the handler of this message and queues a read request.
-     *          This is not a bad option since this way buffering can be done by the caller who may decide how much
-     *          buffering to do (and in general buffer management can get messy).
-     *
-     * How to handle the first ever message?   When a connection is first created it has a stream from which reads
-     * and writes can be done.  This reader will be wrapped with a frame reader to return frames which is also nice.
-     * However the frame reader will only be read from when a read on a message is invoked.  However a message cannot
-     * be created unless the frame reader has been read.   So a start on the frame reader has to be kicked off at some
-     * time (or an intial read has to be kicked off) so that frames can start getting read and passed off to the message
-     * handlers for processing.
-     *
-     * One other scenario this can end up in is say if there are 5 messages being processed and neither of them have done a read yet
-     * so on the connection there is a frame for a new message, since the read is not happening this new frame wont be read.
-     *
-     * Looks like both cases can be solved with a periodic read that happens in a loop (say every second or so as long as the
-     * read queue is empty)
-     */
-    public func read(message: WSMessage, buffer : ReadBufferType, length: LengthType, fully: Bool, callback: WSMessageReadCallback?)
-    {
-        if transportClosed
-        {
-            callback?(length: 0, endReached: true, error: IOErrorType.Closed)
-        } else {
-            // queue the request
-            assert(currentReadRequest == nil, "A read request is already running.  Make the request in a callback of another request or use promises")
-            currentReadRequest = WSReadRequest(message: message, buffer: buffer, fully: fully, length: length, satisfied: 0, callback: callback)
-            continueReading()
-        }
-    }
-    
-    private var frameReadStarted = false
-    /**
-     * This method is the main "scheduler" loop of the reader.
-     */
-    func continueReading()
-    {
-        // now see what to do based on the reader state
-        // TODO: ensure a single loop/queue
-        if reader.isIdle
-        {
-            // no frames have been read yet
-            startNextFrame()
-        }
-        
-        // means we have started a frame, whether it is a control frame or not
-        // someone will "read" it.  So if there are no read requests it means
-        // there is eventually bound to be one
-        if reader.processingPayload && currentReadRequest != nil && !frameReadStarted
-        {
-            assert(!frameReadStarted)
-            frameReadStarted = true
-            var theReadRequest = currentReadRequest!
-            let currentBuffer = theReadRequest.buffer.advancedBy(theReadRequest.satisfied)
-            let remaining = theReadRequest.remaining
-            //            Log.debug("Message Reader Started reading next frame body, Type: \(self.currentFrame.opcode), Remaining: \(remaining)")
-            reader.read(currentBuffer, length: remaining, fully: theReadRequest.fully) { (length, error) in
-                self.frameReadStarted = false
-                //                Log.debug("Finished reading next frame body, Type: \(self.currentFrame.opcode), Error: \(error), Remaining: \(remaining)")
-                if error == nil
-                {
-                    assert(length >= 0, "Length cannot be negative")
-                    theReadRequest.satisfied += length
-                    if self.currentFrame.isControlFrame
-                    {
-                        // do nothing - wait till entire frame is processed
-                        if theReadRequest.remaining == 0
-                        {
-                            // process the frame and start the next frame
-                            //                            self.processCurrentNewFrame {(error) in
-                            self.startNextFrame()
-                            //                            }
-                        } else {
-                            // do nothing as the control frame must be read fully before being processed
-                            self.continueReading()
-                        }
-                    } else {
-                        let endReached = self.reader.remaining == 0 && self.currentFrame.isFinal
-                        if self.currentMessage!.messageType == WSFrame.Opcode.TextFrame && self.validateUtf8
-                        {
-                            let utf8Validated = self.utf8Validator.validate(currentBuffer, length) &&
-                                (!endReached || self.utf8Validator.finish())
-                            if !utf8Validated
-                            {
-                                self.readerClosed()
-                                return
-                            }
-                        }
-                        self.currentReadRequest = nil
-                        if endReached
-                        {
-                            self.currentMessage = nil
-                        }
-                        theReadRequest.callback?(length: theReadRequest.satisfied, endReached: endReached, error: error)
-                    }
-                } else {
-                    self.currentReadRequest = nil
-                    self.currentMessage = nil
-                    theReadRequest.callback?(length: 0, endReached: false, error: error)
-                }
-            }
-        }
-    }
-    
-    
-    private func startNextFrame()
-    {
-        // kick off the reading of the first frame
-        //        Log.debug("Started reading next frame header, State: \(reader.state)")
-        self.reader.start { (frame, error) in
-            //            Log.debug("Finished reading next frame header, error: \(error), Type: \(frame?.opcode), State: \(self.reader.state)")
-            if error == nil && frame != nil {
-                // we have the frame so process it and start the next frame
-                self.processNewFrame(frame!) {(error) in
-                    if !self.transportClosed
-                    {
-                        self.continueReading()
-                    } else {
-                        Log.debug("Transport closed")
-                    }
-                }
-            } else {
-                self.readerClosed()
-            }
-        }
-    }
-    
-    private func readerClosed()
-    {
-        transportClosed = true
-        self.onClosed?()
-    }
-    
-    var frameCount = 0
-    /**
-     * This method will only be called when a control frame has
-     * finished or if a non-control frame is of size 0
-     */
-    private func processNewFrame(frame: WSFrame, callback : CompletionCallback?)
-    {
-        //        Log.debug("Processing New Frame: \(self.currentFrame)")
-        frameCount += 1
-        self.currentFrame = frame
-        if self.currentFrame.isControlFrame
-        {
-            if !self.currentFrame.isFinal || self.currentFrame.payloadLength > 125 || frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
-            {
-                // close the connection
-                self.readerClosed()
-            } else {
-                self.onControlFrame?(frame: self.currentFrame) {(error) in
-                    if (self.currentFrame.opcode == WSFrame.Opcode.CloseFrame)
-                    {
-                        self.readerClosed()
-                    } else {
-                        callback?(error: error)
-                    }
-                }
-            }
-        } else {    // a non control frame
-            if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
-            {
-                // non 0 reserved bits without negotiated extensions
-                // close the connection
-                self.readerClosed()
-            }
-            else if self.currentFrame.opcode.isReserved
-            {
-                // close the connection
-                self.readerClosed()
-            } else if frame.opcode == WSFrame.Opcode.ContinuationFrame {
-                if currentMessage == nil
-                {
-                    self.readerClosed()
-                } else {
-                    callback?(error: nil)
-                }
-            } else {
-                if currentMessage != nil
-                {
-                    // we already have a message so drop this
-                    self.readerClosed()
-                } else {
-                    // starting a new message
-                    self.utf8Validator.reset()
-                    self.messageCounter += 1
-                    currentMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
-                    // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
-                    self.onMessage?(message: currentMessage!)
-                }
-            }
-        }
-    }
-    
-    private struct WSReadRequest
-    {
-        var message : WSMessage?
-        var buffer : ReadBufferType
-        var fully : Bool = false
-        var length : LengthType
-        var satisfied : LengthType = 0
-        var callback : WSMessageReadCallback?
-        
-        var remaining : LengthType { return length - satisfied }
-    }
-}
-
-public class WSMessageWriter
-{
-    public typealias ClosedCallback = Void -> Void
-    public var transportClosed = false
-    public var onClosed : ClosedCallback?
-    
-    /**
-     * Frames wont be bigger than this
-     */
-    private var maxFrameSize : Int = DEFAULT_MAX_FRAME_SIZE
-    
-    private var currMessageCount = 0
-    private var allMessages = [WSMessage]()
-    private var currentMessage : WSMessage?
-    
-    private var writer : WSFrameWriter
-    
-    public init(_ writer: WSFrameWriter, maxFrameSize: Int)
-    {
-        self.maxFrameSize = maxFrameSize
-        self.writer = writer
-    }
-    
-    public convenience init(_ writer: WSFrameWriter)
-    {
-        self.init(writer, maxFrameSize: DEFAULT_MAX_FRAME_SIZE)
-    }
-    
-    
-    /**
-     * Starts a new message that can be streamed out by the caller.
-     * Once a message is created it can be written to continuosly.
-     */
-    public func startMessage(opcode: WSFrame.Opcode) -> WSMessage
-    {
-        currMessageCount += 1
-        let newMessage = WSMessage(type: opcode, id: String(format: "msg:%05d", currMessageCount))
-        allMessages.append(newMessage)
-        return newMessage
-    }
-    
-    /**
-     * Appends more data to a message.
-     */
-    public func write(message: WSMessage, maskingKey: UInt32, source: Payload, isFinal: Bool, callback: CompletionCallback?)
-    {
-        // queue the request
-        if self.transportClosed
-        {
-            callback?(error: IOErrorType.Closed)
-        } else {
-            message.write(source, isFinal: isFinal, maskingKey: maskingKey, callback: callback)
-            continueWriting()
-        }
-    }
-    
-    /**
-     * Closes the message.  This message can no longer be written to.
-     */
-    public func closeMessage(message: WSMessage, callback: CompletionCallback?)
-    {
-        if self.transportClosed
-        {
-            callback?(error: IOErrorType.Closed)
-        } else {
-            message.close(callback)
-        }
-    }
-    
-    /**
-     * Writing messages is slightly simpler than reading messages.  With reading there was the problem of not
-     * knowing when a message started and having to notify connection handlers on new messages so that *then*
-     * they could initiate reads.
-     *
-     * With writes this problem does not exist.  ie a write can only be initiate by the connection handler and
-     * each write marks the start of a new message.  How the message gets fragment is what this writer controls
-     * in concert with the actual message source that is provided at the start of a write.
-     *
-     * So to prevent a front of line blocking of messages, round-robin (or with some other custom scheduling
-     * technique) can be used to decide which message is to be sent in each write call.
-     */
-    private func continueWriting()
-    {
-        // only start a request if the writer is idle
-        // (if it is already writing a frame then dont bother it)
-        if writer.isIdle
-        {
-            if currentMessage != nil
-            {
-                sendNextFrame(currentMessage!)
-            } else {
-                // pick a message which has messages
-                for message in allMessages
-                {
-                    if !message.writeQueue.isEmpty
-                    {
-                        currentMessage = message
-                        continueWriting()
-                        return
-                    }
-                }
-            }
-        }
-    }
-    
-    private func sendNextFrame(message: WSMessage)
-    {
-        message.writeNextFrame(writer, maxFrameSize: maxFrameSize) { (writeRequest, error) -> Void in
-            if error != nil
-            {
-                self.transportClosed = (error as? IOErrorType) == IOErrorType.Closed
-                writeRequest?.callback?(error: error)
-                self.unwindWithError(message, error: error!)
-            }
-            else
-            {
-                if !message.hasMoreFrames
-                {
-                    self.currentMessage = nil
-                    assert(self.writer.isIdle)
-                }
-                writeRequest?.callback?(error: error)
-                self.continueWriting()
-            }
-        }
-    }
-    
-    /**
-     * Called when a read error occurred so all queued requests now need to be cancelled
-     * with the error.
-     */
-    private func unwindWithError(message: WSMessage, error: ErrorType)
-    {
-        Log.debug("Unwinding with error: \(error)")
-        while let next = message.writeQueue.first
-        {
-            message.writeQueue.removeFirst()
-            next.callback?(error: error)
         }
     }
 }
