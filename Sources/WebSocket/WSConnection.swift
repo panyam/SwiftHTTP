@@ -35,24 +35,17 @@ public class WSConnection
     public var onMessage : MessageCallback?
     public var onClosed : ClosedCallback?
     private var controlFrameBuffer : ReadBufferType = ReadBufferType.alloc(256)
-    
-    public var transportClosed = false
+    private var extensions = [WSExtension]()
+    private var transportClosed = false
     
     public init(_ reader: Reader, writer: Writer, _ extensions: [WSExtension])
     {
         self.maxFrameWriteSize = DEFAULT_MAX_FRAME_SIZE
         self.frameReader = WSFrameReader(reader)
         self.frameWriter = WSFrameWriter(writer)
+        self.extensions = extensions
 
         startReading()
-        // So at this point we have a frame reader from which *something* can 
-        // consume frames.  So messages (and channels) are a higher level 
-        // abstraction on top of frames.  We have a message object from which
-        // data can be read.   So how to tie these two together?
-        // There will be a single consumer to the frame reader as everything is
-        // a FIFO stream of frames.  The consumer to the frame reader will be
-        // a messager splitter or demultiplexer - it will take each frame and decide
-        // which channel the frame needs to go to (including control frames).
     }
     
     private func handleClose() {
@@ -61,6 +54,7 @@ public class WSConnection
 
     private func handleMessage(message: WSMessage)
     {
+        // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
         self.onMessage?(message: message)
     }
     
@@ -368,7 +362,7 @@ public class WSConnection
         if frameReader.isIdle
         {
             // no frames have been read yet
-            startNextFrame()
+            startReadingNextFrame()
         }
         
         // means we have started a frame, whether it is a control frame or not
@@ -394,14 +388,23 @@ public class WSConnection
                         if theReadRequest.remaining == 0
                         {
                             // process the frame and start the next frame
-                            //                            self.processCurrentNewFrame {(error) in
-                            self.startNextFrame()
-                            //                            }
+                            self.startReadingNextFrame()
                         } else {
                             // do nothing as the control frame must be read fully before being processed
                             self.continueReading()
                         }
                     } else {
+                        // so we have some data, pass this through all the extensions to see what can be done
+                        // with it
+                        for extn in self.extensions {
+                            let (frame, error) = extn.newFrameRead(self.currentFrame)
+                            if error != nil {
+                                self.readerClosed()
+                                return
+                            }
+                            self.currentFrame = frame
+                        }
+
                         let endReached = self.frameReader.remaining == 0 && self.currentFrame.isFinal
                         if self.currentReadMessage!.messageType == WSFrame.Opcode.TextFrame && self.validateUtf8
                         {
@@ -428,9 +431,8 @@ public class WSConnection
             }
         }
     }
-    
-    
-    private func startNextFrame()
+
+    private func startReadingNextFrame()
     {
         // kick off the reading of the first frame
         //        Log.debug("Started reading next frame header, State: \(reader.state)")
@@ -483,7 +485,18 @@ public class WSConnection
                 }
             }
         } else {    // a non control frame
-            if frame.reserved1Set || frame.reserved2Set || frame.reserved3Set
+            // here get the frame through extensions
+            for extn in extensions {
+                let (frame, error) = extn.newFrameRead(self.currentFrame)
+                if error != nil {
+                    self.readerClosed()
+                    return
+                }
+                self.currentFrame = frame
+            }
+            
+            // after all extensions have gone through the frame, we cannot have reserved bits set
+            if currentFrame.reserved1Set || currentFrame.reserved2Set || currentFrame.reserved3Set
             {
                 // non 0 reserved bits without negotiated extensions
                 // close the connection
@@ -493,7 +506,7 @@ public class WSConnection
             {
                 // close the connection
                 self.readerClosed()
-            } else if frame.opcode == WSFrame.Opcode.ContinuationFrame {
+            } else if currentFrame.opcode == WSFrame.Opcode.ContinuationFrame {
                 if currentReadMessage == nil
                 {
                     self.readerClosed()
@@ -509,9 +522,9 @@ public class WSConnection
                     // starting a new message
                     self.utf8Validator.reset()
                     self.messageCounter += 1
-                    currentReadMessage = WSMessage(type: self.currentFrame.opcode, id: String(format: "%05d", self.messageCounter))
-                    // TODO: What should happen onMessage == nil?  Should it be allowed to be nil?
-                    self.onMessage?(message: currentReadMessage!)
+                    let messageId = String(format: "%05d", self.messageCounter)
+                    currentReadMessage = WSMessage(type: self.currentFrame.opcode, id: messageId)
+                    self.handleMessage(currentReadMessage!)
                 }
             }
         }
