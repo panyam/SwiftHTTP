@@ -1,11 +1,12 @@
 
 import SwiftIO
 import SwiftHTTP
+import RxSwift
 
 func testHTTP1Server()
 {
     let server = HttpServer(9001)
-    
+
     server.serve { (request, response) in
         // find the resource handler for this request
         // dispatch to it

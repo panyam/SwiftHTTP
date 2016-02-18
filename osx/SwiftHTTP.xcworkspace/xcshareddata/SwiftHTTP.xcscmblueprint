@@ -4,14 +4,16 @@
 
   },
   "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
-    "1D493E5B7F10CB9C730621320F8A466032117D2C" : 0,
     "C8C3584BAAEE677B0007020C560B6B04EB636DFC" : 0,
+    "1D493E5B7F10CB9C730621320F8A466032117D2C" : 0,
+    "8B123162C394A0A0A138779108E4C59DD771865A" : 0,
     "1546C33F76143E626ACB6B664C1A8B501AC5FBCC" : 0
   },
   "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "756B13CD-3E97-4C16-9F39-2DDE7B74259B",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
-    "1D493E5B7F10CB9C730621320F8A466032117D2C" : "SwiftHTTP\/External\/Log\/",
     "C8C3584BAAEE677B0007020C560B6B04EB636DFC" : "SwiftHTTP\/",
+    "1D493E5B7F10CB9C730621320F8A466032117D2C" : "SwiftHTTP\/External\/Log\/",
+    "8B123162C394A0A0A138779108E4C59DD771865A" : "RxSwift\/",
     "1546C33F76143E626ACB6B664C1A8B501AC5FBCC" : "SwiftIO\/"
   },
   "DVTSourceControlWorkspaceBlueprintNameKey" : "SwiftHTTP",
@@ -27,6 +29,11 @@
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/delba\/Log",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "1D493E5B7F10CB9C730621320F8A466032117D2C"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/ReactiveX\/RxSwift",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "8B123162C394A0A0A138779108E4C59DD771865A"
     },
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:panyam\/SwiftHTTP.git",
