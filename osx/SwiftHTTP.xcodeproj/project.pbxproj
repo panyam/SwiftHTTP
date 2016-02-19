@@ -45,6 +45,7 @@
 		F7CA85691C54D9630060E012 /* Zlib.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CA85681C54D9630060E012 /* Zlib.swift */; };
 		F7ED248C1C7577AF0012D1BC /* RxServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7ED248B1C7577AF0012D1BC /* RxServer.swift */; };
 		F7ED248E1C7578140012D1BC /* RxStreams.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7ED248D1C7578140012D1BC /* RxStreams.swift */; };
+		F7ED24921C75956F0012D1BC /* RxReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7ED24911C75956F0012D1BC /* RxReader.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -125,6 +126,7 @@
 		F7CA85681C54D9630060E012 /* Zlib.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Zlib.swift; path = Utils/Zlib.swift; sourceTree = "<group>"; };
 		F7ED248B1C7577AF0012D1BC /* RxServer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RxServer.swift; sourceTree = "<group>"; };
 		F7ED248D1C7578140012D1BC /* RxStreams.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RxStreams.swift; sourceTree = "<group>"; };
+		F7ED24911C75956F0012D1BC /* RxReader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RxReader.swift; sourceTree = "<group>"; };
 		F7F1303F1C2A1E8200CA528A /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		F7F74C1E1C48CC7E005A5322 /* Log.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Log.framework; path = "../External/Log/build/Debug-iphoneos/Log.framework"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -332,6 +334,7 @@
 			children = (
 				F7ED248D1C7578140012D1BC /* RxStreams.swift */,
 				F7ED248B1C7577AF0012D1BC /* RxServer.swift */,
+				F7ED24911C75956F0012D1BC /* RxReader.swift */,
 			);
 			path = Rx;
 			sourceTree = "<group>";
@@ -549,6 +552,7 @@
 				F78B5AF21C3DEE8D0018FEAE /* MimeType.swift in Sources */,
 				F78B5AF31C3DEE8D0018FEAE /* HttpStatusCode.swift in Sources */,
 				F78B5AF41C3DEE8D0018FEAE /* Router.swift in Sources */,
+				F7ED24921C75956F0012D1BC /* RxReader.swift in Sources */,
 				F78B5AF51C3DEE8D0018FEAE /* StaticFileHandler.swift in Sources */,
 				F78B5AF61C3DEE8D0018FEAE /* StringBody.swift in Sources */,
 				F78B5AF71C3DEE8D0018FEAE /* WSConnection.swift in Sources */,

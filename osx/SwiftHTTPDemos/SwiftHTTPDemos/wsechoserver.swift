@@ -83,7 +83,4 @@ func testWSServer()
     let wsServer = WSRequestServer(wsHandler)
     wsServer.extensionRegistry.registerFactory("permessage-deflate", factory: WSPMCEFactory())
     server.serve(wsServer)
-
-    // This has to be started
-    CoreFoundationRunLoop.defaultRunLoop().start()
 }

@@ -1,5 +1,6 @@
 
 import SwiftIO
+import RxSwift
 
 let CR : UInt8 = 13
 let LF : UInt8 = 10
@@ -37,23 +38,24 @@ public class HttpConnection : HttpResponseDelegate
 
     /**
      * Serves a new connection.
+     * Returns an Observable<HttpRequest>
      */
-    public func serve()
+    public func serve() -> Observable<HttpRequest>
     {
+        Observable.gene
         currentRequest = HttpRequest(self)
         currentResponse = HttpResponse(self)
-        parseStartLineAndHeaders { (error) -> () in
-            // ready to read body and handle it!
-            Log.debug("Headers received...")
-            if self.requestHandler == nil {
-                // send a 404
-                self.currentResponse.setStatus(HttpStatusCode.NotFound)
-                self.currentResponse.close()
-            } else {
+        return Observable.create { (observer : AnyObserver<HttpRequest>) -> Disposable in
+            // keep reading bytes and aggregating them into lines
+            // keep reading lines and aggregating them into a header collection
+            // once all headers are received we have a new request
+            self.parseStartLineAndHeaders { (error) -> () in
+                // ready to read body and handle it!
                 Log.debug("Connection: \(self.identifier)")
                 Log.debug("Headers: \(self.currentRequest)")
-                self.requestHandler?(request: self.currentRequest, response: self.currentResponse)
+                observer.onNext(self.currentRequest)
             }
+            return AnonymousDisposable({})
         }
     }
 

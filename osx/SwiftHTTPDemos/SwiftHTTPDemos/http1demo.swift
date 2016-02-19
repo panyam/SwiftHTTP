@@ -31,7 +31,4 @@ func testHTTP1Server()
             response.close()
         }
     }
-    
-    // This has to be started
-    CoreFoundationRunLoop.defaultRunLoop().start()
 }

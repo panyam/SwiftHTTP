@@ -9,3 +9,7 @@ func signal_handler(signum: Int32)
 signal(SIGPIPE, signal_handler)
 
 testWSServer()
+
+
+// This has to be started
+CoreFoundationRunLoop.defaultRunLoop().start()

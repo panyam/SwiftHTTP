@@ -12,6 +12,7 @@
 		F784496F1C3F5E3200037251 /* SwiftHTTP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F784496E1C3F5E3200037251 /* SwiftHTTP.framework */; };
 		F78449721C3F5E3F00037251 /* http1demo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78449701C3F5E3F00037251 /* http1demo.swift */; };
 		F78449731C3F5E3F00037251 /* wsechoserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78449711C3F5E3F00037251 /* wsechoserver.swift */; };
+		F7ED24901C758B660012D1BC /* rxdemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7ED248F1C758B660012D1BC /* rxdemo.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -33,6 +34,7 @@
 		F784496E1C3F5E3200037251 /* SwiftHTTP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftHTTP.framework; path = "../../../../Library/Developer/Xcode/DerivedData/SwiftHTTP-chyfuiymxsnxlsgsrnjhtqkdpxui/Build/Products/Debug/SwiftHTTP.framework"; sourceTree = "<group>"; };
 		F78449701C3F5E3F00037251 /* http1demo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = http1demo.swift; sourceTree = "<group>"; };
 		F78449711C3F5E3F00037251 /* wsechoserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = wsechoserver.swift; sourceTree = "<group>"; };
+		F7ED248F1C758B660012D1BC /* rxdemo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = rxdemo.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +73,7 @@
 				F78449711C3F5E3F00037251 /* wsechoserver.swift */,
 				F78449671C3F5D9800037251 /* main.swift */,
 				F766D0431C6D153B00B5B956 /* observable.swift */,
+				F7ED248F1C758B660012D1BC /* rxdemo.swift */,
 			);
 			path = SwiftHTTPDemos;
 			sourceTree = "<group>";
@@ -132,6 +135,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F7ED24901C758B660012D1BC /* rxdemo.swift in Sources */,
 				F766D0441C6D153B00B5B956 /* observable.swift in Sources */,
 				F78449721C3F5E3F00037251 /* http1demo.swift in Sources */,
 				F78449731C3F5E3F00037251 /* wsechoserver.swift in Sources */,
