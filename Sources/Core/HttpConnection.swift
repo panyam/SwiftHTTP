@@ -42,7 +42,6 @@ public class HttpConnection : HttpResponseDelegate
      */
     public func serve() -> Observable<HttpRequest>
     {
-        Observable.gene
         currentRequest = HttpRequest(self)
         currentResponse = HttpResponse(self)
         return Observable.create { (observer : AnyObserver<HttpRequest>) -> Disposable in

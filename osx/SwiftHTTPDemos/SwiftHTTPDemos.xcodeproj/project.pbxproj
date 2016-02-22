@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F748FE011C78502F0026B9F1 /* rxechoserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F748FE001C78502F0026B9F1 /* rxechoserver.swift */; };
 		F766D0441C6D153B00B5B956 /* observable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F766D0431C6D153B00B5B956 /* observable.swift */; };
 		F78449681C3F5D9800037251 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78449671C3F5D9800037251 /* main.swift */; };
 		F784496F1C3F5E3200037251 /* SwiftHTTP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F784496E1C3F5E3200037251 /* SwiftHTTP.framework */; };
@@ -28,6 +29,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F748FE001C78502F0026B9F1 /* rxechoserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = rxechoserver.swift; sourceTree = "<group>"; };
 		F766D0431C6D153B00B5B956 /* observable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = observable.swift; sourceTree = "<group>"; };
 		F78449641C3F5D9800037251 /* SwiftHTTPDemos */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SwiftHTTPDemos; sourceTree = BUILT_PRODUCTS_DIR; };
 		F78449671C3F5D9800037251 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 				F78449671C3F5D9800037251 /* main.swift */,
 				F766D0431C6D153B00B5B956 /* observable.swift */,
 				F7ED248F1C758B660012D1BC /* rxdemo.swift */,
+				F748FE001C78502F0026B9F1 /* rxechoserver.swift */,
 			);
 			path = SwiftHTTPDemos;
 			sourceTree = "<group>";
@@ -138,6 +141,7 @@
 				F7ED24901C758B660012D1BC /* rxdemo.swift in Sources */,
 				F766D0441C6D153B00B5B956 /* observable.swift in Sources */,
 				F78449721C3F5E3F00037251 /* http1demo.swift in Sources */,
+				F748FE011C78502F0026B9F1 /* rxechoserver.swift in Sources */,
 				F78449731C3F5E3F00037251 /* wsechoserver.swift in Sources */,
 				F78449681C3F5D9800037251 /* main.swift in Sources */,
 			);

@@ -9,11 +9,25 @@
 import RxSwift
 import SwiftIO
 
-public class CallbackStreamConsumer : StreamConsumer {
+public class CallbackStreamConsumer : StreamConsumer, Pausable {
     public var onError : ((error : ErrorType) -> Void)?
     public var onDataReceivable : ((receiver: DataReceiver) -> Bool)?
     public var onClosed : (Void -> Void)?
+    private var theStream : Stream
     
+    public init(_ stream: Stream)
+    {
+        self.theStream = stream
+    }
+    
+    public func pause() {
+        theStream.clearReadyToRead()
+    }
+    
+    public func resume() {
+        theStream.setReadyToRead()
+    }
+
     /**
      * Called when read error received.
      */
@@ -34,24 +48,52 @@ public class CallbackStreamConsumer : StreamConsumer {
         return false
     }
     
-     /**
-     * Called by the stream when it can pass data to be processed.
-     * Returns a buffer (and length) into which at most length number bytes will be filled.
+    /**
+     * Called when the parent stream is closed.
      */
-    public func readDataRequested() -> (buffer: UnsafeMutablePointer<UInt8>, length: LengthType)?
+    public func streamClosed() {
+        onClosed?()
+    }
+}
+
+
+public class CallbackStreamProducer : StreamProducer, Pausable {
+    public var onError : ((error : ErrorType) -> Void)?
+    public var onDataSendable : ((sender: DataSender) -> Bool)?
+    public var onClosed : (Void -> Void)?
+    private var theStream : Stream
+    
+    public init(_ stream: Stream)
     {
-        assert(false, "not implemented")
+        self.theStream = stream
+    }
+    
+    public func pause() {
+        theStream.clearReadyToWrite()
+    }
+    
+    public func resume() {
+        theStream.setReadyToWrite()
+    }
+
+    /**
+     * Called when write error received.
+     */
+    public func receivedWriteError(error: ErrorType)
+    {
+        onError?(error: error)
     }
     
     /**
-     * Called to process data that has been received.
-     * It is upto the caller of this interface to consume *all* the data
-     * provided.
-     * @param   length  Number of bytes read.  0 if EOF reached.
+     * Called when the stream has data to be received.
+     * receiver.read Can called by the consumer until data is left.
      */
-    public func dataReceived(length: LengthType)
+    public func canSendData(sender: DataSender) -> Bool
     {
-        assert(false, "not implemented")
+        if let onDataSendable = onDataSendable {
+            return onDataSendable(sender: sender)
+        }
+        return false
     }
     
     /**

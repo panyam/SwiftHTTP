@@ -8,7 +8,8 @@ func signal_handler(signum: Int32)
 
 signal(SIGPIPE, signal_handler)
 
-testWSServer()
+//testWSServer()
+testRxEchoServer()
 
 
 // This has to be started
