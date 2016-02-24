@@ -17,6 +17,20 @@ public protocol Pausable {
 public protocol DataSource {
     func sendWith(sender: DataSender) -> (Bool, ErrorType?)
 }
+
+public class AnonymousDataSource : DataSource {
+    public typealias SendWithCallback = (DataSender) -> (Bool, ErrorType?)
+    private var sendWithCallback : SendWithCallback
+
+    public init (_ callback : SendWithCallback) {
+        self.sendWithCallback = callback
+    }
+
+    public func sendWith(sender: DataSender) -> (Bool, ErrorType?) {
+        return self.sendWithCallback(sender)
+    }
+}
+
 //
 //public class DataSource : DataSource {
 //    // The receiver from which data can be read for as long as we want
@@ -34,7 +48,7 @@ public protocol DataSource {
 
 public class RxServer : StreamHandler
 {
-    public typealias DataSourceCreator = (DataReceiver) -> DataSource
+    public typealias DataSourceCreator = (DataReceiver) -> Observable<DataSource>
     var socketServer = CFSocketServer(nil)
     var connections = [RxConnection]()
     var serverPort: UInt16 = 8888
@@ -54,17 +68,19 @@ public class RxServer : StreamHandler
         connection.stream = stream
         stream.producer = createDataSourceProducer(connection)
         connection.observable = createDataSourceConsumer(stream)
+            .flatMap({ return $0 })
             .map({ (source: DataSource) in
                 connection.addSource(source)
             })
+        connection.observable?.subscribe()
         connections.append(connection)
     }
     
-    private func createDataSourceConsumer(var stream : Stream) -> Observable<DataSource> {
+    private func createDataSourceConsumer(var stream : Stream) -> Observable<Observable<DataSource>> {
         let callbackConsumer = CallbackStreamConsumer(stream)
         stream.consumer = callbackConsumer
 
-        return Observable.create { (observer: AnyObserver<DataSource>) -> Disposable in
+        return Observable.create { (observer: AnyObserver<Observable<DataSource>>) -> Disposable in
             callbackConsumer.onClosed = { observer.onCompleted() }
             callbackConsumer.onError = { observer.onError($0) }
             callbackConsumer.onDataReceivable = { (receiver : DataReceiver) -> Bool in
@@ -77,6 +93,12 @@ public class RxServer : StreamHandler
 
     private func createDataSourceProducer( connection : RxConnection) -> StreamProducer {
         let callbackProducer = CallbackStreamProducer(connection.stream)
+        callbackProducer.onClosed = {
+            assert(false, "How to handle a close?")
+        }
+        callbackProducer.onError = {(error : ErrorType) in
+            assert(false, "How to handle an error?")
+        }
         callbackProducer.onDataSendable = {(sender : DataSender) in
             // the sender can be sent invoked to send *something*, 
             // something has to be given this so it can push stuff through the sender.
@@ -122,24 +144,25 @@ public class RxConnection {
         stream.setReadyToWrite()
     }
     
-    func flushWith(sender: DataSender) -> Bool {
+    func flushWith(sender: DataSender) -> (Bool, ErrorType?) {
         // make stream not ready to read as we have a fair bit of data to write
         // TODO: may be only do this if a certain threshold has reached?
         stream.clearReadyToRead()
         while let source = pendingDataSources.first {
-            let (finished, error) = source.sendWith(sender)
+            let (hasMore, error) = source.sendWith(sender)
             if error != nil {
                 // TODO: how to handle error
-                return true
+                return (false, error)
             }
-            else if finished {
+            else if !hasMore {
                 pendingDataSources.removeFirst()
             } else {
                 // not able to send any more so no point in trying again
                 stream.setReadyToWrite()
-                return true
+                return (true, nil)
             }
         }
-        return false
+        stream.setReadyToRead()
+        return (false, nil)
     }
 }

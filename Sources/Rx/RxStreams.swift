@@ -59,7 +59,7 @@ public class CallbackStreamConsumer : StreamConsumer, Pausable {
 
 public class CallbackStreamProducer : StreamProducer, Pausable {
     public var onError : ((error : ErrorType) -> Void)?
-    public var onDataSendable : ((sender: DataSender) -> Bool)?
+    public var onDataSendable : ((sender: DataSender) -> (Bool, ErrorType?))?
     public var onClosed : (Void -> Void)?
     private var theStream : Stream
     
@@ -88,12 +88,12 @@ public class CallbackStreamProducer : StreamProducer, Pausable {
      * Called when the stream has data to be received.
      * receiver.read Can called by the consumer until data is left.
      */
-    public func canSendData(sender: DataSender) -> Bool
+    public func canSendData(sender: DataSender) -> (Bool, ErrorType?)
     {
         if let onDataSendable = onDataSendable {
             return onDataSendable(sender: sender)
         }
-        return false
+        return (false, nil)
     }
     
     /**
